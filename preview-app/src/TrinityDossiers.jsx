@@ -1,4 +1,19 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+
+// Mobile detection hook
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < breakpoint : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
 
 const ATTR_LIST = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
 const ATTR_FULL = { STR: "Strength", DEX: "Dexterity", CON: "Constitution", INT: "Intelligence", WIS: "Wisdom", CHA: "Charisma" };
@@ -206,6 +221,14 @@ export default function TrinityDossiers() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmDeleteEntry, setConfirmDeleteEntry] = useState(null);
   const saveTimeout = useRef(null);
+  const isMobile = useIsMobile();
+
+  // Responsive style helper - merges base style with mobile overrides
+  const rs = useCallback((key) => {
+    const base = styles[key] || {};
+    const mobile = isMobile && mobileStyles[key] ? mobileStyles[key] : {};
+    return { ...base, ...mobile };
+  }, [isMobile]);
 
   useEffect(() => {
     try {
@@ -647,9 +670,9 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
       {/* HEADER */}
       <div style={styles.header}>
         <div className="venetian-blinds"/>
-        <div style={styles.headerInner}>
+        <div style={rs("headerInner")}>
           <div style={styles.logoBlock}>
-            <svg width="44" height="44" viewBox="0 0 100 100" style={{ marginRight: 14, flexShrink: 0 }}>
+            <svg width={isMobile ? 32 : 44} height={isMobile ? 32 : 44} viewBox="0 0 100 100" style={{ marginRight: isMobile ? 8 : 14, flexShrink: 0 }}>
               <rect x="5" y="5" width="90" height="90" rx="4" fill="none" stroke="#c4a46c" strokeWidth="3"/>
               <path d="M50 15 C35 15 25 25 25 38 C25 52 40 48 40 58 L40 72 L35 72 L35 78 L65 78 L65 72 L60 72 L60 58 C60 48 75 52 75 38 C75 25 65 15 50 15Z" fill="#c4a46c" opacity="0.9"/>
               <circle cx="45" cy="33" r="3" fill="#1a1410"/>
@@ -657,31 +680,31 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
               <line x1="30" y1="85" x2="70" y2="85" stroke="#c4a46c" strokeWidth="2"/>
             </svg>
             <div>
-              <div style={styles.logoText}>ROOKWREN<span style={styles.logoAmp}>&thinsp;&&thinsp;</span>LOCKE</div>
-              <div style={styles.logoSub}>CONTRACTUAL OBLIGATIONS DIVISION</div>
+              <div style={rs("logoText")}>ROOKWREN<span style={styles.logoAmp}>&thinsp;&&thinsp;</span>LOCKE</div>
+              <div style={rs("logoSub")}>CONTRACTUAL OBLIGATIONS DIVISION</div>
             </div>
           </div>
           <div style={styles.headerRight}>
-            <div style={styles.classifiedStamp}>CLASSIFIED</div>
+            <div style={rs("classifiedStamp")}>CLASSIFIED</div>
             <div style={styles.saveIndicator}>
               {saving ? <span style={{ animation: "pulse 1s infinite" }}>◉ SAVING</span> : <span style={{ opacity: 0.4 }}>◉ SYNCED</span>}
             </div>
           </div>
         </div>
-        <div style={styles.headerBar}>
-          <span style={styles.headerBarText}>TRINITY INVESTIGATIONS — PERSONNEL DOSSIERS — INTERNAL USE ONLY</span>
+        <div style={rs("headerBar")}>
+          <span style={rs("headerBarText")}>{isMobile ? "TRINITY — PERSONNEL DOSSIERS" : "TRINITY INVESTIGATIONS — PERSONNEL DOSSIERS — INTERNAL USE ONLY"}</span>
         </div>
       </div>
 
       {/* TABS */}
-      <div style={styles.tabRow}>
+      <div style={rs("tabRow")}>
         {characters.map((c, i) => (
-          <div key={i} style={{ position: "relative", flex: 1 }}>
+          <div key={i} style={{ position: "relative", flex: isMobile ? "0 0 auto" : 1 }}>
             <div onClick={() => setActiveTab(i)}
-              style={{ ...styles.tab, ...(i === activeTab ? styles.tabActive : {}), cursor: "pointer" }}>
-              <span style={styles.tabLabel}>DOSSIER {String(i + 1).padStart(2, "0")}</span>
-              <span style={styles.tabName}>{c.name}</span>
-              <span style={styles.tabRace}>{c.race}{c.pedigree ? ` — ${c.pedigree}` : ""}</span>
+              style={{ ...rs("tab"), ...(i === activeTab ? styles.tabActive : {}), cursor: "pointer" }}>
+              <span style={rs("tabLabel")}>DOSSIER {String(i + 1).padStart(2, "0")}</span>
+              <span style={rs("tabName")}>{c.name}</span>
+              <span style={rs("tabRace")}>{c.race}{c.pedigree ? ` — ${c.pedigree}` : ""}</span>
             </div>
             {characters.length > 1 && (
               <div onClick={(e) => { e.stopPropagation(); removeAgent(i); }}
@@ -693,32 +716,34 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
             )}
           </div>
         ))}
-        <div onClick={addAgent} style={styles.addTab} title="Add new agent">+</div>
-        <button onClick={() => setJournalOpen(true)} style={styles.journalStamp}>
-          <span style={styles.journalStampInner}>FIELD JOURNAL</span>
-          <span style={styles.journalStampCount}>{(char.journal || []).length} {(char.journal || []).length === 1 ? "entry" : "entries"}</span>
+        <div onClick={addAgent} style={rs("addTab")} title="Add new agent">+</div>
+        <button onClick={() => setJournalOpen(true)} style={rs("journalStamp")}>
+          <span style={rs("journalStampInner")}>{isMobile ? "JOURNAL" : "FIELD JOURNAL"}</span>
+          <span style={rs("journalStampCount")}>{(char.journal || []).length}</span>
         </button>
       </div>
 
       {/* DOSSIER CONTENT */}
-      <div style={styles.dossierWrap}>
-        <div style={styles.dossierPage}>
-          {/* Decorative elements */}
-          <div className="dossier-noise"/>
-          <div className="coffee-ring" style={{ bottom: 120, left: 40 }}/>
-          <div className="coffee-ring" style={{ top: 200, right: 60, width: 60, height: 60 }}/>
-          <div className="ink-splat" style={{ top: 150, left: 200 }}/>
-          <div className="ink-splat" style={{ bottom: 300, right: 150, width: 8, height: 8 }}/>
-          <div className="ink-splat" style={{ top: 400, left: 100, width: 6, height: 6 }}/>
-          <div className="redacted-stamp" style={{ top: 180, right: 40 }}>[REDACTED]</div>
-          <div className="redacted-stamp" style={{ top: 450, left: 60, transform: "rotate(-12deg)", fontSize: 11 }}>[CLASSIFIED — LEVEL 4]</div>
-          <div className="redacted-stamp" style={{ bottom: 200, right: 100, transform: "rotate(-5deg)", fontSize: 10 }}>[REDACTED]</div>
-          <div className="redacted-stamp" style={{ top: 700, left: 180, transform: "rotate(-15deg)", fontSize: 9 }}>EYES ONLY</div>
-          <div style={styles.caseNumber}>CASE NO. R&L-{char.id.replace(/\D/g,"").padStart(3,"0")}-{String(char.level).padStart(2,"0")}-TRI</div>
-          <div style={styles.cornerTL}/>
-          <div style={styles.cornerBR}/>
-          <div style={styles.soulBoundStamp}>SOUL BOUND</div>
-          {char.mancer_branded && <div style={styles.mancerStamp}>⚠ MANCER — REGISTERED ⚠</div>}
+      <div style={rs("dossierWrap")}>
+        <div style={rs("dossierPage")}>
+          {/* Decorative elements - hidden on mobile */}
+          {!isMobile && <>
+            <div className="dossier-noise"/>
+            <div className="coffee-ring" style={{ bottom: 120, left: 40 }}/>
+            <div className="coffee-ring" style={{ top: 200, right: 60, width: 60, height: 60 }}/>
+            <div className="ink-splat" style={{ top: 150, left: 200 }}/>
+            <div className="ink-splat" style={{ bottom: 300, right: 150, width: 8, height: 8 }}/>
+            <div className="ink-splat" style={{ top: 400, left: 100, width: 6, height: 6 }}/>
+            <div className="redacted-stamp" style={{ top: 180, right: 40 }}>[REDACTED]</div>
+            <div className="redacted-stamp" style={{ top: 450, left: 60, transform: "rotate(-12deg)", fontSize: 11 }}>[CLASSIFIED — LEVEL 4]</div>
+            <div className="redacted-stamp" style={{ bottom: 200, right: 100, transform: "rotate(-5deg)", fontSize: 10 }}>[REDACTED]</div>
+            <div className="redacted-stamp" style={{ top: 700, left: 180, transform: "rotate(-15deg)", fontSize: 9 }}>EYES ONLY</div>
+          </>}
+          <div style={rs("caseNumber")}>CASE NO. R&L-{char.id.replace(/\D/g,"").padStart(3,"0")}-{String(char.level).padStart(2,"0")}-TRI</div>
+          {!isMobile && <div style={styles.cornerTL}/>}
+          {!isMobile && <div style={styles.cornerBR}/>}
+          <div style={rs("soulBoundStamp")}>SOUL BOUND</div>
+          {char.mancer_branded && <div style={rs("mancerStamp")}>⚠ MANCER ⚠</div>}
 
           {/* SECTIONS - draggable and reorderable */}
           {sectionOrder.map(secId => (
@@ -734,11 +759,11 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
               <SectionHeader title={SECTION_TITLES[secId]} expanded={expandedSections[secId]} toggle={() => toggleSection(secId)} icon="◆" draggable/>
 
               {expandedSections[secId] && (
-                <div style={{ ...styles.sectionContent, animation: "fadeIn 0.3s ease" }}>
+                <div style={{ ...rs("sectionContent"), animation: "fadeIn 0.3s ease" }}>
                   {secId === "identity" && (
-                    <div style={styles.identityGrid}>
-                      <div style={styles.photoArea}>
-                        <div style={styles.photoFrame}>
+                    <div style={rs("identityGrid")}>
+                      <div style={rs("photoArea")}>
+                        <div style={rs("photoFrame")}>
                           {char.photo_url ? <img src={char.photo_url} alt="Agent" style={styles.photoImg}/> : (
                             <div style={styles.photoPlaceholder}>
                               <div style={{ fontSize: 28, marginBottom: 4 }}>⊘</div>
@@ -778,9 +803,9 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                           </button>
                         )}
                       </div>
-                      <div style={styles.identityFields}>
+                      <div style={rs("identityFields")}>
                         <EditableField label="Full Name / Alias" value={char.name} onChange={(v) => updateChar("name", v)}/>
-                        <div style={styles.fieldRow}>
+                        <div style={rs("fieldRow")}>
                           <div style={{ flex: "0 0 48%", minWidth: 120, marginBottom: 10 }}>
                             <label style={styles.fieldLabel}>Race</label>
                             <select value={char.race} onChange={(e) => { updateChar("race", e.target.value); const peds = RACES[e.target.value] || []; if (peds.length > 0 && !peds.includes(char.pedigree)) updateChar("pedigree", peds[0]); else if (peds.length === 0) updateChar("pedigree", ""); }} style={styles.selectInput}>
@@ -798,7 +823,7 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                             )}
                           </div>
                         </div>
-                        <div style={styles.fieldRow}>
+                        <div style={rs("fieldRow")}>
                           <EditableField label="Faction" value={char.faction || ""} onChange={(v) => updateChar("faction", v)} half placeholder="Trinity Investigations, etc."/>
                           <div style={{ flex: "0 0 48%", minWidth: 120, marginBottom: 10 }}>
                             <label style={styles.fieldLabel}>Background</label>
@@ -820,13 +845,13 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                             )}
                           </div>
                         </div>
-                        <div style={styles.fieldRow}>
+                        <div style={rs("fieldRow")}>
                           <EditableField label="Level" value={char.level} onChange={(v) => updateChar("level", Math.max(0, parseInt(v) || 0))} type="number" quarter/>
                           <EditableField label="CP Total" value={3 + (char.level * 3) + flawsCpGained} type="display" quarter/>
                           <EditableField label="CP Manual" value={char.cp_spent} onChange={(v) => updateChar("cp_spent", parseInt(v) || 0)} type="number" quarter/>
                           <EditableField label="CP Left" value={(3 + char.level * 3 + flawsCpGained) - (char.cp_spent + meritsCpSpent)} type="display" quarter/>
                         </div>
-                        <div style={styles.fieldRow}>
+                        <div style={rs("fieldRow")}>
                           <EditableField label="SP / Lv" value={spPerLevel} type="display" quarter/>
                           <EditableField label="SP Total" value={spTotal} type="display" quarter/>
                           <EditableField label="SP Used" value={spSpent} type="display" quarter/>
@@ -849,7 +874,7 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                             updateChar("languages", cur.includes(lang) ? cur.filter(l => l !== lang) : [...cur, lang]);
                           }}/>
                         </div>
-                        <div style={styles.fieldRow}>
+                        <div style={rs("fieldRow")}>
                           <div style={{ flex: 1 }}>
                             <label style={styles.fieldLabel}>Primary Attribute</label>
                             <select value={char.primary_attr} onChange={(e) => updateChar("primary_attr", e.target.value)} style={styles.selectInput}>
@@ -863,12 +888,12 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                             </select>
                           </div>
                         </div>
-                        <div style={styles.fieldRow}>
+                        <div style={rs("fieldRow")}>
                           <CheckboxField label="Mancer Branded" checked={char.mancer_branded} onChange={(v) => updateChar("mancer_branded", v)}/>
                           {char.mancer_branded && <EditableField label="Mancer Type" value={char.mancer_type} onChange={(v) => updateChar("mancer_type", v)} quarter placeholder="Pyromancer, etc."/>}
                           {char.mancer_branded && <EditableField label="Mancer Level" value={char.mancer_level || 0} onChange={(v) => updateChar("mancer_level", parseInt(v) || 0)} type="number" quarter/>}
                         </div>
-                        <div style={styles.fieldRow}>
+                        <div style={rs("fieldRow")}>
                           <CheckboxField label="Arcane Caster (Mana)" checked={char.mana_enabled} onChange={(v) => updateChar("mana_enabled", v)}/>
                           <CheckboxField label="Sensitive / Mancer (PE)" checked={char.pe_enabled} onChange={(v) => updateChar("pe_enabled", v)}/>
                         </div>
@@ -877,7 +902,7 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                   )}
 
                   {secId === "attributes" && (
-                    <div style={styles.attrGrid}>
+                    <div style={rs("attrGrid")}>
                       {ATTR_LIST.map(attr => {
                         const score = char.attrs[attr]; const cap = (char.attr_caps || {})[attr] || 18;
                         const mod = getModifier(score); const isPrimary = char.primary_attr === attr; const isSecondary = char.secondary_attr === attr;
@@ -902,7 +927,7 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                   )}
 
                   {secId === "combat" && (<>
-                    <div style={styles.combatGrid}>
+                    <div style={rs("combatGrid")}>
                       <StatBox label="HP" sub="Hit Points" tip={STAT_TIPS.HP}>
                         <div style={styles.statRow}>
                           <input type="number" value={char.hp_current} onChange={(e) => updateChar("hp_current", parseInt(e.target.value) || 0)} style={styles.statInput}/>
@@ -934,7 +959,7 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                         <input type="number" value={char.damage_mod || 0} onChange={(e) => updateChar("damage_mod", parseInt(e.target.value) || 0)} style={styles.statInputLg}/>
                       </StatBox>
                     </div>
-                    <div style={styles.combatGrid}>
+                    <div style={rs("combatGrid")}>
                       <StatBox label="FTG" sub="Fatigue (5 = death)" tip={STAT_TIPS.FTG}>
                         <div style={styles.fatigueRow}>
                           {[1,2,3,4,5].map(n => (
@@ -973,7 +998,7 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                   </>)}
 
                   {secId === "sanity" && (
-                    <div style={styles.sanityBlock}>
+                    <div style={rs("sanityBlock")}>
                       <div style={styles.sanityMain}>
                         <div style={styles.sanityLabel}>SANITY</div>
                         <div style={styles.sanityRow}>
@@ -1011,7 +1036,7 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                           style={{ width: 32, background: "transparent", border: "none", borderBottom: "1px solid #4a3c2a", color: "#c4a46c", fontFamily: "'Courier Prime', monospace", fontSize: 11, textAlign: "center", outline: "none" }} min="1"/>
                       </div>
                     </div>
-                    <div style={styles.skillsGrid}>
+                    <div style={rs("skillsGrid")}>
                       {ATTR_LIST.map(attr => {
                         const mod = getModifier(char.attrs[attr]);
                         return (
@@ -1271,17 +1296,17 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
 
       {/* JOURNAL OVERLAY */}
       {journalOpen && (
-        <div style={styles.journalOverlay} onClick={(e) => { if (e.target === e.currentTarget) { setJournalOpen(false); setJournalEdit(null); setJournalDraft({ title: "", session: "", content: "" }); }}}>
-          <div style={styles.journalPage}>
+        <div style={rs("journalOverlay")} onClick={(e) => { if (e.target === e.currentTarget) { setJournalOpen(false); setJournalEdit(null); setJournalDraft({ title: "", session: "", content: "" }); }}}>
+          <div style={rs("journalPage")}>
             {/* Typewriter page decorations */}
-            <div style={styles.jpHoles}>
+            <div style={rs("jpHoles")}>
               {[...Array(12)].map((_, i) => <div key={i} style={styles.jpHole}/>)}
             </div>
-            <div style={styles.jpRedLine}/>
-            <div style={styles.jpContent}>
+            <div style={rs("jpRedLine")}/>
+            <div style={rs("jpContent")}>
               {/* Header */}
-              <div style={styles.jpHeader}>
-                <div style={styles.jpLogo}>ROOKWREN<span style={{ color: "#6b4c2a" }}>&thinsp;&&thinsp;</span>LOCKE</div>
+              <div style={rs("jpHeader")}>
+                <div style={rs("jpLogo")}>ROOKWREN<span style={{ color: "#6b4c2a" }}>&thinsp;&&thinsp;</span>LOCKE</div>
                 <div style={styles.jpLogoSub}>CONTRACTUAL OBLIGATIONS DIVISION</div>
                 <div style={styles.jpDivider}/>
                 <div style={styles.jpAgent}>{char.name}</div>
@@ -1290,11 +1315,11 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
               </div>
 
               {/* Toolbar */}
-              <div style={styles.jpToolbar}>
+              <div style={rs("jpToolbar")}>
                 <div style={styles.jpToolbarLeft}>
                   <span style={styles.jpEntryCount}>{(char.journal || []).length} {(char.journal || []).length === 1 ? "entry" : "entries"}</span>
                 </div>
-                <div style={styles.jpToolbarRight}>
+                <div style={rs("jpToolbarRight")}>
                   <button onClick={exportJournalPDF} style={styles.jpExportBtn}>↓ Export .html</button>
                   <button onClick={exportJournalText} style={styles.jpExportBtn}>↓ Download .txt</button>
                   <button onClick={() => { setJournalOpen(false); setJournalEdit(null); setJournalDraft({ title: "", session: "", content: "" }); }} style={styles.jpCloseBtn}>✕ Close</button>
@@ -1384,21 +1409,21 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
 
       {/* SPELLBOOK OVERLAY */}
       {spellbookOpen && (
-        <div style={styles.journalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setSpellbookOpen(false); }}>
-          <div style={styles.journalPage}>
-            <div style={styles.jpHoles}>
+        <div style={rs("journalOverlay")} onClick={(e) => { if (e.target === e.currentTarget) setSpellbookOpen(false); }}>
+          <div style={rs("journalPage")}>
+            <div style={rs("jpHoles")}>
               {[...Array(12)].map((_, i) => <div key={i} style={styles.jpHole}/>)}
             </div>
-            <div style={styles.jpRedLine}/>
-            <div style={styles.jpContent}>
-              <div style={styles.jpHeader}>
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px" }}>
+            <div style={rs("jpRedLine")}/>
+            <div style={rs("jpContent")}>
+              <div style={rs("jpHeader")}>
+                <svg width={isMobile ? 28 : 36} height={isMobile ? 28 : 36} viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px" }}>
                   <path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="#4a3c2a" strokeWidth="1.5" strokeLinecap="round"/>
                   <path d="M4 4.5A2.5 2.5 0 016.5 2H20v15H6.5A2.5 2.5 0 004 19.5v-15z" stroke="#4a3c2a" strokeWidth="1.5"/>
                   <path d="M9 7h6M9 11h4" stroke="#8b6914" strokeWidth="1" strokeLinecap="round"/>
                   <circle cx="17" cy="6" r="2" fill="#8b2500" opacity="0.5"/>
                 </svg>
-                <div style={styles.jpLogo}>SPELLBOOK</div>
+                <div style={rs("jpLogo")}>SPELLBOOK</div>
                 <div style={styles.jpLogoSub}>{char.name}</div>
                 <div style={styles.jpDivider}/>
                 <div style={{ fontFamily: "'Special Elite', cursive", fontSize: 10, color: "#8b7355", letterSpacing: 2, marginTop: 4 }}>
@@ -2574,4 +2599,79 @@ const styles = {
     color: "#8b7355", textAlign: "center", marginTop: 40, paddingTop: 16,
     borderTop: "1px solid #c8bfb0",
   },
+};
+
+// Mobile style overrides
+const mobileStyles = {
+  headerInner: { padding: "12px 12px 6px", gap: 8 },
+  logoText: { fontSize: 18, letterSpacing: 2 },
+  logoSub: { fontSize: 7, letterSpacing: 3 },
+  classifiedStamp: { fontSize: 10, padding: "2px 8px", letterSpacing: 2 },
+  headerBar: { padding: "3px 12px" },
+  headerBarText: { fontSize: 7, letterSpacing: 2 },
+  tabRow: { padding: "0 8px", overflowX: "auto", WebkitOverflowScrolling: "touch" },
+  tab: { padding: "8px 10px", minWidth: 100, flex: "0 0 auto" },
+  tabLabel: { fontSize: 7 },
+  tabName: { fontSize: 11 },
+  tabRace: { fontSize: 8 },
+  addTab: { width: 28, padding: "6px 0", fontSize: 16 },
+  journalStamp: { padding: "6px 10px", marginLeft: 4 },
+  journalStampInner: { fontSize: 9, letterSpacing: 2 },
+  journalStampCount: { fontSize: 7 },
+  dossierWrap: { padding: "0 8px 24px" },
+  dossierPage: { padding: "16px 12px" },
+  caseNumber: { fontSize: 7, letterSpacing: 2, top: 8, right: 10 },
+  soulBoundStamp: { fontSize: 12, padding: "3px 14px", bottom: 10, right: 10 },
+  mancerStamp: { fontSize: 8, padding: "3px 10px", bottom: 36, right: 10 },
+  sectionHeader: { padding: "12px 12px" },
+  sectionTitle: { fontSize: 13, letterSpacing: 4 },
+  sectionContent: { padding: "12px" },
+  identityGrid: { flexDirection: "column", gap: 16 },
+  photoArea: { alignItems: "center" },
+  photoFrame: { width: 100, height: 120 },
+  identityFields: { minWidth: "100%" },
+  fieldRow: { flexDirection: "column", gap: 8 },
+  attrGrid: { gridTemplateColumns: "repeat(2, 1fr)", gap: 8 },
+  attrCard: { padding: "10px 8px" },
+  attrName: { fontSize: 16 },
+  attrScoreInput: { width: 48, fontSize: 24 },
+  attrMod: { fontSize: 14 },
+  combatGrid: { gridTemplateColumns: "repeat(2, 1fr)", gap: 10 },
+  statBox: { padding: "10px" },
+  statLabel: { fontSize: 16 },
+  statInput: { width: 50, fontSize: 24 },
+  statInputLg: { width: 60, fontSize: 24 },
+  sanityBlock: { flexDirection: "column", gap: 12 },
+  sanityMain: { padding: 12 },
+  sanityLabel: { fontSize: 16 },
+  sanityInput: { width: 60, fontSize: 26 },
+  sanityDCs: { padding: 12 },
+  skillsGrid: { gridTemplateColumns: "1fr" },
+  skillGroup: { padding: 10 },
+  meritsGrid: { gridTemplateColumns: "1fr" },
+  meritCard: { padding: "10px 12px" },
+  equipGrid: { gridTemplateColumns: "1fr" },
+  equipCard: { padding: 10 },
+  // Modals
+  journalOverlay: { padding: "8px" },
+  journalPage: { maxWidth: "100%", minHeight: "auto", borderRadius: 0 },
+  jpHoles: { display: "none" },
+  jpRedLine: { left: 12 },
+  jpContent: { padding: "20px 16px 20px 24px" },
+  jpHeader: { paddingBottom: 12, marginBottom: 12 },
+  jpLogo: { fontSize: 18, letterSpacing: 3 },
+  jpToolbar: { flexDirection: "column", gap: 8, alignItems: "stretch" },
+  jpToolbarRight: { justifyContent: "center" },
+  spellOverlay: { padding: "8px" },
+  spellPage: { maxWidth: "100%", borderRadius: 0 },
+  spellContent: { padding: "16px 12px" },
+};
+
+// Helper to get responsive style
+const getStyle = (isMobile, ...keys) => {
+  return keys.reduce((acc, key) => {
+    const base = styles[key] || {};
+    const mobile = isMobile && mobileStyles[key] ? mobileStyles[key] : {};
+    return { ...acc, ...base, ...mobile };
+  }, {});
 };
