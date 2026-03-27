@@ -823,7 +823,7 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                           </div>
                         </div>
                         <div style={styles.fieldRow}>
-                          <EditableField label="Level" value={char.level} onChange={(v) => updateChar("level", parseInt(v) || 1)} type="number" quarter/>
+                          <EditableField label="Level" value={char.level} onChange={(v) => updateChar("level", Math.max(0, parseInt(v) || 0))} type="number" quarter/>
                           <EditableField label="CP Total" value={3 + (char.level * 3) + flawsCpGained} type="display" quarter/>
                           <EditableField label="CP Manual" value={char.cp_spent} onChange={(v) => updateChar("cp_spent", parseInt(v) || 0)} type="number" quarter/>
                           <EditableField label="CP Left" value={(3 + char.level * 3 + flawsCpGained) - (char.cp_spent + meritsCpSpent)} type="display" quarter/>
