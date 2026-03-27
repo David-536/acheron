@@ -1,0 +1,9 @@
+/* Minimal reset for TrinityDossiers preview */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
