@@ -208,29 +208,27 @@ export default function TrinityDossiers() {
   const saveTimeout = useRef(null);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const result = await window.storage.get(STORAGE_KEY);
-        if (result && result.value) {
-          const parsed = JSON.parse(result.value);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const merged = parsed.map((saved, i) => {
-              const def = defaultChar(saved.id || `char${i+1}`, saved.name || `Agent ${i+1}`, saved.race || "Human", saved.pedigree || "");
-              return { ...def, ...saved };
-            });
-            setCharacters(merged);
-          } else { setCharacters(DEFAULT_CHARS); }
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const merged = parsed.map((saved, i) => {
+            const def = defaultChar(saved.id || `char${i+1}`, saved.name || `Agent ${i+1}`, saved.race || "Human", saved.pedigree || "");
+            return { ...def, ...saved };
+          });
+          setCharacters(merged);
         } else { setCharacters(DEFAULT_CHARS); }
-      } catch { setCharacters(DEFAULT_CHARS); }
-      setLoading(false);
-    })();
+      } else { setCharacters(DEFAULT_CHARS); }
+    } catch { setCharacters(DEFAULT_CHARS); }
+    setLoading(false);
   }, []);
 
   const saveData = useCallback((data) => {
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    saveTimeout.current = setTimeout(async () => {
+    saveTimeout.current = setTimeout(() => {
       setSaving(true);
-      try { await window.storage.set(STORAGE_KEY, JSON.stringify(data)); }
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
       catch (e) { console.error("Save failed:", e); }
       setSaving(false);
     }, 800);
@@ -253,10 +251,10 @@ export default function TrinityDossiers() {
 
   const toggleSection = (key) => setExpandedSections(p => ({ ...p, [key]: !p[key] }));
 
-  const resetAll = async () => {
+  const resetAll = () => {
     if (!confirmReset) { setConfirmReset(true); return; }
     setCharacters(DEFAULT_CHARS);
-    try { await window.storage.set(STORAGE_KEY, JSON.stringify(DEFAULT_CHARS)); } catch {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_CHARS)); } catch {}
     setConfirmReset(false);
   };
 
