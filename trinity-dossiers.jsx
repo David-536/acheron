@@ -739,11 +739,11 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
             <div className="redacted-stamp" style={{ bottom: 200, right: 100, transform: "rotate(-5deg)", fontSize: 10 }}>[REDACTED]</div>
             <div className="redacted-stamp" style={{ top: 700, left: 180, transform: "rotate(-15deg)", fontSize: 9 }}>EYES ONLY</div>
           </>}
-          <div style={rs("caseNumber")}>CASE NO. R&L-{char.id.replace(/\D/g,"").padStart(3,"0")}-{String(char.level).padStart(2,"0")}-TRI</div>
+          {!isMobile && <div style={styles.caseNumber}>CASE NO. R&L-{char.id.replace(/\D/g,"").padStart(3,"0")}-{String(char.level).padStart(2,"0")}-TRI</div>}
           {!isMobile && <div style={styles.cornerTL}/>}
           {!isMobile && <div style={styles.cornerBR}/>}
-          <div style={rs("soulBoundStamp")}>SOUL BOUND</div>
-          {char.mancer_branded && <div style={rs("mancerStamp")}>⚠ MANCER ⚠</div>}
+          {!isMobile && <div style={styles.soulBoundStamp}>SOUL BOUND</div>}
+          {!isMobile && char.mancer_branded && <div style={styles.mancerStamp}>⚠ MANCER — REGISTERED ⚠</div>}
 
           {/* SECTIONS - draggable and reorderable */}
           {sectionOrder.map(secId => (
@@ -2621,14 +2621,14 @@ const mobileStyles = {
   dossierWrap: { padding: "0 8px 24px" },
   dossierPage: { padding: "16px 12px" },
   caseNumber: { fontSize: 7, letterSpacing: 2, top: 8, right: 10 },
-  soulBoundStamp: { fontSize: 12, padding: "3px 14px", bottom: 10, right: 10 },
-  mancerStamp: { fontSize: 8, padding: "3px 10px", bottom: 36, right: 10 },
+  soulBoundStamp: { position: "static", fontSize: 10, padding: "2px 10px", margin: "8px 0", alignSelf: "flex-end", transform: "none" },
+  mancerStamp: { position: "static", fontSize: 8, padding: "2px 8px", margin: "4px 0", alignSelf: "flex-end", transform: "none" },
   sectionHeader: { padding: "12px 12px" },
   sectionTitle: { fontSize: 13, letterSpacing: 4 },
   sectionContent: { padding: "12px" },
   identityGrid: { flexDirection: "column", gap: 16 },
-  photoArea: { alignItems: "center" },
-  photoFrame: { width: 100, height: 120 },
+  photoArea: { flex: "0 0 auto", width: "100%", display: "flex", flexDirection: "column", alignItems: "center" },
+  photoFrame: { width: 100, height: 120, marginBottom: 8 },
   identityFields: { minWidth: "100%" },
   fieldRow: { flexDirection: "column", gap: 8 },
   attrGrid: { gridTemplateColumns: "repeat(2, 1fr)", gap: 8 },
