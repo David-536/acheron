@@ -356,7 +356,7 @@ const defaultChar = (id, name, race, pedigree) => ({
   trained_skills: {},
   trained_skill_list: [],
   trained_skill_cap: 9,
-  knowledge_types: [], craft_types: [],
+  knowledge_types: [], craft_types: [], perform_types: [],
   sp_spent: 0,
   weapons: [],
   armor: [],
@@ -692,13 +692,18 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
   const trainedList = char.trained_skill_list || [];
   const knowledgeTypes = char.knowledge_types || [];
   const craftTypes = char.craft_types || [];
-  const subtypeSpent = [...knowledgeTypes.map(kt => `Knowledge_-_${kt.replace(/\s/g, "_")}`), ...craftTypes.map(ct => `Craft_-_${ct.replace(/\s/g, "_")}`)].reduce((sum, key) => {
+  const performTypes = char.perform_types || [];
+  const subtypeSpent = [
+    ...knowledgeTypes.map(kt => `Knowledge_-_${kt.replace(/\s/g, "_")}`),
+    ...craftTypes.map(ct => `Craft_-_${ct.replace(/\s/g, "_")}`),
+    ...performTypes.map(pt => `Perform_-_${pt.replace(/\s/g, "_")}`)
+  ].reduce((sum, key) => {
     const ranks = (char.trained_skills || {})[key] || 0;
     if (ranks === 0) return sum;
     return sum + (trainedList.includes(key) ? ranks : ranks * 2);
   }, 0);
   const spSpent = ALL_SKILLS.reduce((sum, s) => {
-    if (s.name === "Knowledge" || s.name === "Craft") return sum;
+    if (s.name === "Knowledge" || s.name === "Craft" || s.name === "Perform") return sum;
     const ranks = (char.trained_skills || {})[s.key] || 0;
     if (ranks === 0) return sum;
     return sum + (trainedList.includes(s.key) ? ranks : ranks * 2);
@@ -767,6 +772,30 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
         delete updatedSkills[key];
         const updatedTrained = (c.trained_skill_list || []).filter(k2 => k2 !== key);
         return { ...c, craft_types: updatedTypes, trained_skills: updatedSkills, trained_skill_list: updatedTrained };
+      });
+      saveData(next);
+      return next;
+    });
+  };
+
+  const addPerformType = (typeName) => {
+    const trimmed = typeName.trim();
+    if (!trimmed) return;
+    const existing = char.perform_types || [];
+    if (existing.some(k => k.toLowerCase() === trimmed.toLowerCase())) return;
+    updateChar("perform_types", [...existing, trimmed]);
+  };
+
+  const removePerformType = (typeName) => {
+    const key = `Perform_-_${typeName.replace(/\s/g, "_")}`;
+    setCharacters(prev => {
+      const next = prev.map((c, i) => {
+        if (i !== activeTab) return c;
+        const updatedTypes = (c.perform_types || []).filter(k => k !== typeName);
+        const updatedSkills = { ...(c.trained_skills || {}) };
+        delete updatedSkills[key];
+        const updatedTrained = (c.trained_skill_list || []).filter(k2 => k2 !== key);
+        return { ...c, perform_types: updatedTypes, trained_skills: updatedSkills, trained_skill_list: updatedTrained };
       });
       saveData(next);
       return next;
@@ -1337,12 +1366,11 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                         <div key={attr} style={styles.skillGroup}>
                           <div style={styles.skillGroupHeader}>{ATTR_FULL[attr]} ({attr}) mod: {fmtMod(mod)} | max ranks: {char.attrs[attr]}</div>
                           {SKILL_MAP[attr].map(skill => {
-                            if (skill === "Knowledge" || skill === "Craft") {
-                              const isKnowledge = skill === "Knowledge";
-                              const types = isKnowledge ? knowledgeTypes : craftTypes;
-                              const addFn = isKnowledge ? addKnowledgeType : addCraftType;
-                              const removeFn = isKnowledge ? removeKnowledgeType : removeCraftType;
-                              const prefix = isKnowledge ? "Knowledge" : "Craft";
+                            if (skill === "Knowledge" || skill === "Craft" || skill === "Perform") {
+                              const types = skill === "Knowledge" ? knowledgeTypes : skill === "Craft" ? craftTypes : performTypes;
+                              const addFn = skill === "Knowledge" ? addKnowledgeType : skill === "Craft" ? addCraftType : addPerformType;
+                              const removeFn = skill === "Knowledge" ? removeKnowledgeType : skill === "Craft" ? removeCraftType : removePerformType;
+                              const prefix = skill;
                               return (
                                 <div key={`${skill}-block`}>
                                   <Tooltip text={SKILL_TIPS[skill]}>
@@ -1367,7 +1395,7 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                                       </div>
                                     );
                                   })}
-                                  {isKnowledge ? <KnowledgeAdder onAdd={addFn}/> : <CraftAdder onAdd={addFn}/>}
+                                  {skill === "Knowledge" ? <KnowledgeAdder onAdd={addFn}/> : skill === "Craft" ? <CraftAdder onAdd={addFn}/> : <PerformAdder onAdd={addFn}/>}
                                 </div>
                               );
                             }
@@ -1535,7 +1563,7 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
 
       {/* JOURNAL OVERLAY */}
       {journalOpen && (
-        <div style={styles.journalOverlay} onClick={(e) => { if (e.target === e.currentTarget) { setJournalOpen(false); setJournalEdit(null); setJournalDraft({ title: "", session: "", content: "" }); }}}>
+        <div style={styles.journalOverlay} onClick={(e) => { if (e.target === e.currentTarget) { setJournalOpen(false); setJournalEdit(null); }}}>
           <div style={styles.journalPage}>
             {/* Typewriter page decorations */}
             <div style={styles.jpHoles}>
@@ -1561,7 +1589,7 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                 <div style={styles.jpToolbarRight}>
                   <button onClick={exportJournalPDF} style={styles.jpExportBtn}>↓ Export .html</button>
                   <button onClick={exportJournalText} style={styles.jpExportBtn}>↓ Download .txt</button>
-                  <button onClick={() => { setJournalOpen(false); setJournalEdit(null); setJournalDraft({ title: "", session: "", content: "" }); }} style={styles.jpCloseBtn}>✕ Close</button>
+                  <button onClick={() => { setJournalOpen(false); setJournalEdit(null); }} style={styles.jpCloseBtn}>✕ Close</button>
                 </div>
               </div>
 
@@ -1804,6 +1832,7 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
                 return SKILL_MAP[attr].flatMap(skill => {
                   if (skill==="Knowledge") return (char.knowledge_types||[]).map(t => ({name:`K: ${t}`,key:`Knowledge_-_${t.replace(/\s/g,"_")}`,attr,mod}));
                   if (skill==="Craft") return (char.craft_types||[]).map(t => ({name:`C: ${t}`,key:`Craft_-_${t.replace(/\s/g,"_")}`,attr,mod}));
+                  if (skill==="Perform") return (char.perform_types||[]).map(t => ({name:`P: ${t}`,key:`Perform_-_${t.replace(/\s/g,"_")}`,attr,mod}));
                   return [{name:skill,key:skill.replace(/\s/g,"_"),attr,mod}];
                 });
               }).filter(s => ((char.trained_skills||{})[s.key]||0)>0 || trainedList.includes(s.key)).map(s => {
@@ -2052,6 +2081,24 @@ function CraftAdder({ onAdd }) {
       </select>
       <div style={styles.knowledgeCustomRow}>
         <input type="text" value={val} onChange={(e) => setVal(e.target.value)} placeholder="Custom craft..."
+          style={styles.knowledgeCustomInput} onKeyDown={(e) => { if (e.key === "Enter" && val.trim()) { onAdd(val); setVal(""); } }}/>
+        <button onClick={() => { if (val.trim()) { onAdd(val); setVal(""); } }} style={styles.knowledgeCustomBtn}>+</button>
+      </div>
+    </div>
+  );
+}
+
+function PerformAdder({ onAdd }) {
+  const [val, setVal] = useState("");
+  const COMMON = ["Singing","Guitar","Piano","Violin","Drums","Wind Instruments","Acting","Dancing","Fire Dancing","Comedy","Oratory","Poetry","Storytelling","DJ","Magic Tricks"];
+  return (
+    <div style={styles.knowledgeAdder}>
+      <select value="" onChange={(e) => { if (e.target.value) { onAdd(e.target.value); e.target.value = ""; } }} style={styles.knowledgeSelect}>
+        <option value="">+ Add Perform...</option>
+        {COMMON.map(k => <option key={k} value={k}>{k}</option>)}
+      </select>
+      <div style={styles.knowledgeCustomRow}>
+        <input type="text" value={val} onChange={(e) => setVal(e.target.value)} placeholder="Custom perform..."
           style={styles.knowledgeCustomInput} onKeyDown={(e) => { if (e.key === "Enter" && val.trim()) { onAdd(val); setVal(""); } }}/>
         <button onClick={() => { if (val.trim()) { onAdd(val); setVal(""); } }} style={styles.knowledgeCustomBtn}>+</button>
       </div>
