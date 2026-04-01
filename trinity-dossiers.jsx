@@ -144,6 +144,125 @@ const LANGUAGES = {
   "Illegal": ["Remorian", "E'Anga", "Demonic", "Eldritch"],
 };
 
+// Monster Creator Constants
+const MONSTER_STORAGE_KEY = "acheron-monsters-v1";
+const MONSTER_TYPES = ["Arcane", "Fae", "Spirit", "Demonic", "Eldritch", "Outsider", "Humanoid", "Beast", "Construct", "Undead"];
+const MONSTER_TYPE_ICONS = {
+  All: "◈", Arcane: "✧", Fae: "❀", Spirit: "◎", Demonic: "ψ",
+  Eldritch: "◬", Outsider: "⬡", Humanoid: "♟", Beast: "◗", Construct: "⚙", Undead: "☠"
+};
+const TIER_COLORS = {
+  0: { bg: "#e8f5e9", border: "#4caf50", text: "#2e7d32" },  // Green - trivial
+  1: { bg: "#e3f2fd", border: "#2196f3", text: "#1565c0" },  // Blue - easy
+  2: { bg: "#fff8e1", border: "#ffc107", text: "#f57f17" },  // Yellow - moderate
+  3: { bg: "#fff3e0", border: "#ff9800", text: "#e65100" },  // Orange - challenging
+  4: { bg: "#ffebee", border: "#f44336", text: "#c62828" },  // Red - dangerous
+  5: { bg: "#f3e5f5", border: "#9c27b0", text: "#6a1b9a" },  // Purple - deadly
+  6: { bg: "#37474f", border: "#90a4ae", text: "#eceff1" },  // Dark - legendary
+};
+const MONSTER_RARITIES = ["Very Common", "Common", "Uncommon", "Rare", "Very Rare", "Legendary", "Mythical"];
+const MONSTER_SIZES = ["Tiny", "Small", "Medium", "Large", "Huge", "Gigantic"];
+const MONSTER_DISPOSITIONS = ["Aggressive", "Defensive", "Territorial", "Passive", "Predatory", "Ambusher"];
+const MONSTER_TACTICS = ["Brawler", "Skirmisher", "Controller", "Striker", "Support", "Artillery", "Swarm"];
+const MONSTER_MOVEMENT_TYPES = ["Fly", "Climb", "Burrow", "Swim"];
+
+const CREATURE_TYPE_PRESETS = {
+  "Arcane": { immunities: ["Sanity damage", "Stun"], resistances: ["Magic DR1", "Electric DR1"], vulnerabilities: ["Sonic"] },
+  "Fae": { immunities: ["Fae magic", "Mind-altering"], resistances: ["Magic DR1"], vulnerabilities: ["Cold Iron"] },
+  "Spirit": { immunities: ["Fatigue"], resistances: ["Physical DR1"], vulnerabilities: ["Mercury"] },
+  "Demonic": { immunities: ["Disabled"], resistances: ["Fast Healing 1+"], vulnerabilities: ["Gold"] },
+  "Eldritch": { immunities: [], resistances: ["Psychic DR1", "Sanity DR1"], vulnerabilities: ["Wall Shards"] },
+  "Outsider": { immunities: ["Wall mutations", "Necro/Neuro/Bio-mancy"], resistances: [], vulnerabilities: [] },
+};
+
+const SIZE_MODIFIERS = {
+  "Tiny": { evaBonus: 4, hpBonus: -4, example: "Rat" },
+  "Small": { evaBonus: 2, hpBonus: -2, example: "Cat" },
+  "Medium": { evaBonus: 0, hpBonus: 0, example: "Human" },
+  "Large": { evaBonus: -2, hpBonus: 2, example: "Horse" },
+  "Huge": { evaBonus: -4, hpBonus: 4, example: "Elephant" },
+  "Gigantic": { evaBonus: -6, hpBonus: 8, example: "Dragon" },
+};
+
+const defaultMonster = () => ({
+  id: Date.now().toString(),
+  name: "",
+  category: 1,
+  type: [],
+  keywords: {
+    rarity: "Common",
+    size: "Medium",
+    disposition: "Aggressive",
+    tactics: "Brawler",
+  },
+  attrs: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+  hp: 10,
+  evasion: 10,
+  movement: 30,
+  movement_types: [],
+  attacks: [],
+  adaptations: [],
+  malformations: [],
+  abilities: [],
+  skills: "",
+  languages: [],
+  phases: [],
+  dieHard: 0,
+  notes: "",
+});
+
+const SAMPLE_MONSTERS = [
+  // ARCANE
+  { id: "arc1", name: "Spell Wisp", category: 1, type: ["Arcane"], keywords: { rarity: "Common", size: "Tiny", disposition: "Territorial", tactics: "Skirmisher" }, attrs: { STR: 4, DEX: 16, CON: 8, INT: 12, WIS: 10, CHA: 6 }, hp: 8, evasion: 14, movement: 40, movement_types: ["Fly"], attacks: [{ id: "a1", name: "Arcane Spark", bonus: 4, damage: "1d4", damageType: "Lightning", properties: "Range 30ft" }], adaptations: ["Immune to Sleep"], malformations: ["Vulnerable to Dispel"], abilities: [{ id: "ab1", name: "Flicker", description: "Can teleport 10ft as a bonus action" }], skills: "Stealth +4", languages: [], dieHard: 0, notes: "Fragments of residual magic given form" },
+  { id: "arc2", name: "Arcane Sentinel", category: 2, type: ["Arcane", "Construct"], keywords: { rarity: "Uncommon", size: "Medium", disposition: "Protective", tactics: "Tank" }, attrs: { STR: 14, DEX: 10, CON: 16, INT: 8, WIS: 12, CHA: 6 }, hp: 35, evasion: 12, movement: 25, movement_types: [], attacks: [{ id: "a1", name: "Force Strike", bonus: 5, damage: "2d6", damageType: "Force", properties: "" }], adaptations: ["Resist Magic", "Immune to Poison"], malformations: ["Vulnerable to Lightning"], abilities: [{ id: "ab1", name: "Spell Ward", description: "Allies within 10ft gain +2 to saves vs magic" }], skills: "Perception +3", languages: [], dieHard: 1, notes: "Created to guard magical locations" },
+  { id: "arc3", name: "Ley Weaver", category: 3, type: ["Arcane"], keywords: { rarity: "Rare", size: "Medium", disposition: "Calculating", tactics: "Controller" }, attrs: { STR: 8, DEX: 14, CON: 12, INT: 18, WIS: 16, CHA: 14 }, hp: 45, evasion: 14, movement: 30, movement_types: ["Fly"], attacks: [{ id: "a1", name: "Ley Bolt", bonus: 7, damage: "3d8", damageType: "Force", properties: "Range 60ft" }], adaptations: ["Immune to Charm", "Resist Force"], malformations: [], abilities: [{ id: "ab1", name: "Ley Manipulation", description: "Can redirect magical attacks within 30ft" }, { id: "ab2", name: "Counterspell", description: "Can negate one spell per round" }], skills: "Arcana +8, Perception +5", languages: ["Primordial"], dieHard: 1, notes: "Beings born where ley lines intersect" },
+
+  // FAE
+  { id: "fae1", name: "Pixie Trickster", category: 1, type: ["Fae"], keywords: { rarity: "Common", size: "Tiny", disposition: "Mischievous", tactics: "Skirmisher" }, attrs: { STR: 4, DEX: 18, CON: 8, INT: 12, WIS: 10, CHA: 16 }, hp: 6, evasion: 16, movement: 20, movement_types: ["Fly"], attacks: [{ id: "a1", name: "Thorn Dart", bonus: 5, damage: "1d4", damageType: "Piercing", properties: "Range 40ft" }], adaptations: ["Immune to Charm"], malformations: ["Vulnerable to Iron"], abilities: [{ id: "ab1", name: "Invisibility", description: "Can turn invisible until attacking" }, { id: "ab2", name: "Pixie Dust", description: "Can cause confusion on touch" }], skills: "Stealth +6, Deception +5", languages: ["Sylvan"], dieHard: 0, notes: "Loves pranks and shiny objects" },
+  { id: "fae2", name: "Thornguard", category: 2, type: ["Fae"], keywords: { rarity: "Uncommon", size: "Large", disposition: "Protective", tactics: "Tank" }, attrs: { STR: 16, DEX: 10, CON: 16, INT: 8, WIS: 14, CHA: 8 }, hp: 50, evasion: 10, movement: 25, movement_types: [], attacks: [{ id: "a1", name: "Thorn Slam", bonus: 6, damage: "2d8+3", damageType: "Piercing", properties: "Reach 10ft" }], adaptations: ["Resist Piercing", "Regeneration 5 in sunlight"], malformations: ["Vulnerable to Fire", "Vulnerable to Iron"], abilities: [{ id: "ab1", name: "Entangling Growth", description: "Vines erupt in 15ft radius, difficult terrain" }], skills: "Nature +4", languages: ["Sylvan"], dieHard: 2, notes: "Ancient protector of sacred groves" },
+  { id: "fae3", name: "Sidhe Noble", category: 3, type: ["Fae"], keywords: { rarity: "Rare", size: "Medium", disposition: "Manipulative", tactics: "Controller" }, attrs: { STR: 12, DEX: 16, CON: 14, INT: 16, WIS: 14, CHA: 20 }, hp: 55, evasion: 15, movement: 35, movement_types: [], attacks: [{ id: "a1", name: "Moonblade", bonus: 7, damage: "2d8+3", damageType: "Slashing", properties: "Magical" }, { id: "a2", name: "Fae Curse", bonus: 8, damage: "3d6", damageType: "Psychic", properties: "Range 60ft, WIS save" }], adaptations: ["Immune to Charm", "Immune to Sleep", "Resist Cold"], malformations: ["Vulnerable to Iron"], abilities: [{ id: "ab1", name: "Glamour", description: "Can appear as any humanoid" }, { id: "ab2", name: "Geas", description: "Can place a compulsion on a charmed target" }], skills: "Deception +9, Persuasion +9, Insight +6", languages: ["Sylvan", "Common", "Elvish"], dieHard: 1, notes: "Aristocracy of the Fae Courts" },
+
+  // SPIRIT
+  { id: "spr1", name: "Whisper Shade", category: 1, type: ["Spirit"], keywords: { rarity: "Common", size: "Medium", disposition: "Territorial", tactics: "Ambusher" }, attrs: { STR: 6, DEX: 14, CON: 10, INT: 8, WIS: 12, CHA: 10 }, hp: 12, evasion: 13, movement: 30, movement_types: ["Fly", "Incorporeal"], attacks: [{ id: "a1", name: "Chilling Touch", bonus: 4, damage: "1d6", damageType: "Cold", properties: "Ignores armor" }], adaptations: ["Immune to Poison", "Resist Physical"], malformations: ["Vulnerable to Radiant"], abilities: [{ id: "ab1", name: "Phase", description: "Can move through solid objects" }], skills: "Stealth +4", languages: [], dieHard: 0, notes: "Echoes of forgotten memories" },
+  { id: "spr2", name: "Vengeful Haunt", category: 2, type: ["Spirit"], keywords: { rarity: "Uncommon", size: "Medium", disposition: "Aggressive", tactics: "Striker" }, attrs: { STR: 8, DEX: 16, CON: 12, INT: 10, WIS: 12, CHA: 14 }, hp: 30, evasion: 14, movement: 40, movement_types: ["Fly", "Incorporeal"], attacks: [{ id: "a1", name: "Spectral Claws", bonus: 6, damage: "2d6", damageType: "Necrotic", properties: "Ignores armor" }], adaptations: ["Immune to Poison", "Immune to Exhaustion", "Resist Physical"], malformations: ["Vulnerable to Radiant", "Bound to Location"], abilities: [{ id: "ab1", name: "Horrifying Visage", description: "Those who see it must save or be frightened" }, { id: "ab2", name: "Possession", description: "Can attempt to possess a humanoid" }], skills: "Intimidation +5, Stealth +5", languages: ["Common"], dieHard: 0, notes: "Spirit bound by unfinished business" },
+  { id: "spr3", name: "Wailing Specter", category: 3, type: ["Spirit"], keywords: { rarity: "Rare", size: "Large", disposition: "Aggressive", tactics: "Controller" }, attrs: { STR: 10, DEX: 14, CON: 14, INT: 12, WIS: 16, CHA: 18 }, hp: 50, evasion: 14, movement: 50, movement_types: ["Fly", "Incorporeal"], attacks: [{ id: "a1", name: "Soul Rend", bonus: 7, damage: "3d8", damageType: "Necrotic", properties: "Reduces max HP" }], adaptations: ["Immune to Poison", "Immune to Cold", "Resist Physical"], malformations: ["Vulnerable to Radiant"], abilities: [{ id: "ab1", name: "Wail of Despair", description: "30ft cone, CON save or take 4d6 psychic and be stunned" }, { id: "ab2", name: "Life Drain", description: "Heals equal to necrotic damage dealt" }], skills: "Intimidation +8, Perception +6", languages: ["Common", "Abyssal"], dieHard: 0, notes: "Amalgamation of tormented souls" },
+
+  // DEMONIC
+  { id: "dem1", name: "Imp", category: 1, type: ["Demonic"], keywords: { rarity: "Common", size: "Tiny", disposition: "Cunning", tactics: "Skirmisher" }, attrs: { STR: 6, DEX: 16, CON: 10, INT: 12, WIS: 10, CHA: 14 }, hp: 10, evasion: 15, movement: 20, movement_types: ["Fly"], attacks: [{ id: "a1", name: "Infernal Sting", bonus: 5, damage: "1d4+2", damageType: "Piercing", properties: "Poison: DC 11 CON or 2d4 poison" }], adaptations: ["Immune to Fire", "Resist Cold", "Resist Physical (non-silver)"], malformations: ["Vulnerable to Radiant"], abilities: [{ id: "ab1", name: "Shapechanger", description: "Can transform into a rat, raven, or spider" }, { id: "ab2", name: "Invisibility", description: "Can turn invisible at will" }], skills: "Deception +4, Stealth +5", languages: ["Infernal", "Common"], dieHard: 0, notes: "Minor demon, often serves as familiar" },
+  { id: "dem2", name: "Hellhound", category: 2, type: ["Demonic", "Beast"], keywords: { rarity: "Uncommon", size: "Large", disposition: "Aggressive", tactics: "Striker" }, attrs: { STR: 16, DEX: 14, CON: 14, INT: 6, WIS: 12, CHA: 8 }, hp: 45, evasion: 12, movement: 50, movement_types: [], attacks: [{ id: "a1", name: "Bite", bonus: 6, damage: "2d6+3", damageType: "Piercing", properties: "+2d6 fire damage" }], adaptations: ["Immune to Fire"], malformations: ["Vulnerable to Cold"], abilities: [{ id: "ab1", name: "Fire Breath", description: "15ft cone, 4d6 fire, DEX save for half" }, { id: "ab2", name: "Pack Tactics", description: "Advantage when ally is within 5ft of target" }], skills: "Perception +5, Survival +3", languages: ["Infernal"], dieHard: 1, notes: "Hunts the damned across planes" },
+  { id: "dem3", name: "Pit Fiend", category: 3, type: ["Demonic"], keywords: { rarity: "Very Rare", size: "Large", disposition: "Calculating", tactics: "Boss" }, attrs: { STR: 20, DEX: 14, CON: 18, INT: 18, WIS: 16, CHA: 20 }, hp: 85, evasion: 14, movement: 30, movement_types: ["Fly"], attacks: [{ id: "a1", name: "Flaming Mace", bonus: 10, damage: "3d8+5", damageType: "Bludgeoning", properties: "+3d6 fire" }, { id: "a2", name: "Tail", bonus: 10, damage: "2d10+5", damageType: "Bludgeoning", properties: "" }], adaptations: ["Immune to Fire", "Immune to Poison", "Resist Cold", "Resist Physical (non-silver)"], malformations: [], abilities: [{ id: "ab1", name: "Fear Aura", description: "20ft radius, WIS save or frightened" }, { id: "ab2", name: "Infernal Contract", description: "Can offer binding magical contracts" }], skills: "Intimidation +10, Deception +10, Insight +8", languages: ["Infernal", "Common", "Telepathy 120ft"], dieHard: 3, notes: "General of the infernal legions" },
+
+  // ELDRITCH
+  { id: "eld1", name: "Void Tendril", category: 1, type: ["Eldritch"], keywords: { rarity: "Uncommon", size: "Small", disposition: "Alien", tactics: "Ambusher" }, attrs: { STR: 12, DEX: 14, CON: 12, INT: 4, WIS: 8, CHA: 4 }, hp: 15, evasion: 13, movement: 20, movement_types: ["Climb"], attacks: [{ id: "a1", name: "Lash", bonus: 4, damage: "1d8+1", damageType: "Bludgeoning", properties: "Grapple on hit" }], adaptations: ["Immune to Psychic", "Resist Cold"], malformations: ["Vulnerable to Radiant"], abilities: [{ id: "ab1", name: "Void Touch", description: "Grappled targets take 1d4 psychic at start of turn" }], skills: "Stealth +4", languages: [], dieHard: 0, notes: "Fragment reaching through from the void" },
+  { id: "eld2", name: "Star Spawn", category: 2, type: ["Eldritch"], keywords: { rarity: "Rare", size: "Medium", disposition: "Alien", tactics: "Controller" }, attrs: { STR: 14, DEX: 12, CON: 16, INT: 14, WIS: 14, CHA: 8 }, hp: 55, evasion: 12, movement: 30, movement_types: ["Fly"], attacks: [{ id: "a1", name: "Psychic Lash", bonus: 6, damage: "2d8", damageType: "Psychic", properties: "Range 60ft" }, { id: "a2", name: "Tentacle", bonus: 5, damage: "2d6+2", damageType: "Bludgeoning", properties: "Grapple" }], adaptations: ["Immune to Psychic", "Immune to Frightened", "Resist Cold"], malformations: [], abilities: [{ id: "ab1", name: "Maddening Presence", description: "30ft aura, WIS save or disadvantage on attacks" }, { id: "ab2", name: "Warp Reality", description: "Can teleport 30ft as bonus action" }], skills: "Perception +5, Arcana +5", languages: ["Deep Speech", "Telepathy 60ft"], dieHard: 1, notes: "Servant of things between the stars" },
+  { id: "eld3", name: "Elder Thing", category: 3, type: ["Eldritch"], keywords: { rarity: "Very Rare", size: "Large", disposition: "Alien", tactics: "Boss" }, attrs: { STR: 18, DEX: 10, CON: 20, INT: 22, WIS: 18, CHA: 16 }, hp: 95, evasion: 12, movement: 30, movement_types: ["Fly", "Swim"], attacks: [{ id: "a1", name: "Mind Blast", bonus: 9, damage: "4d10", damageType: "Psychic", properties: "30ft cone, INT save" }, { id: "a2", name: "Tentacle Barrage", bonus: 8, damage: "3d8+4", damageType: "Bludgeoning", properties: "All creatures within 10ft" }], adaptations: ["Immune to Psychic", "Immune to Frightened", "Immune to Charmed", "Resist All Physical"], malformations: [], abilities: [{ id: "ab1", name: "Reality Anchor", description: "Magic within 60ft requires concentration check" }, { id: "ab2", name: "Unknowable Form", description: "Looking directly causes 2d6 psychic damage" }, { id: "ab3", name: "Dimensional Rift", description: "Can open portal to the void" }], skills: "Arcana +12, History +12, Perception +9", languages: ["Deep Speech", "Telepathy 120ft"], dieHard: 2, notes: "Ancient being from beyond the stars" },
+
+  // OUTSIDER
+  { id: "out1", name: "Planar Drifter", category: 1, type: ["Outsider"], keywords: { rarity: "Uncommon", size: "Medium", disposition: "Curious", tactics: "Skirmisher" }, attrs: { STR: 10, DEX: 14, CON: 12, INT: 14, WIS: 12, CHA: 10 }, hp: 18, evasion: 13, movement: 30, movement_types: [], attacks: [{ id: "a1", name: "Phasing Strike", bonus: 4, damage: "1d8+1", damageType: "Force", properties: "Ignores cover" }], adaptations: ["Resist Force"], malformations: ["Disoriented on Material Plane"], abilities: [{ id: "ab1", name: "Blink", description: "50% chance attacks miss as creature phases" }], skills: "Arcana +4, Perception +3", languages: ["Common", "Primordial"], dieHard: 0, notes: "Lost traveler from another plane" },
+  { id: "out2", name: "Dimension Walker", category: 2, type: ["Outsider"], keywords: { rarity: "Rare", size: "Medium", disposition: "Calculating", tactics: "Striker" }, attrs: { STR: 14, DEX: 16, CON: 14, INT: 16, WIS: 14, CHA: 12 }, hp: 45, evasion: 15, movement: 40, movement_types: [], attacks: [{ id: "a1", name: "Reality Blade", bonus: 7, damage: "2d8+3", damageType: "Force", properties: "Ignores resistance" }, { id: "a2", name: "Banishing Strike", bonus: 7, damage: "2d6+3", damageType: "Force", properties: "CHA save or banished 1 round" }], adaptations: ["Immune to Banishment", "Resist Force", "Resist Psychic"], malformations: [], abilities: [{ id: "ab1", name: "Planar Step", description: "Teleport 60ft as bonus action" }, { id: "ab2", name: "Anchor Point", description: "Can return to marked location within 100ft" }], skills: "Arcana +6, Stealth +6, Perception +5", languages: ["Common", "Primordial", "Celestial"], dieHard: 1, notes: "Professional planar mercenary" },
+  { id: "out3", name: "Reality Shaper", category: 3, type: ["Outsider"], keywords: { rarity: "Very Rare", size: "Large", disposition: "Alien", tactics: "Controller" }, attrs: { STR: 16, DEX: 14, CON: 18, INT: 20, WIS: 18, CHA: 16 }, hp: 80, evasion: 14, movement: 40, movement_types: ["Fly"], attacks: [{ id: "a1", name: "Reality Tear", bonus: 9, damage: "4d8", damageType: "Force", properties: "Creates difficult terrain" }], adaptations: ["Immune to Force", "Immune to Banishment", "Resist All Elemental"], malformations: [], abilities: [{ id: "ab1", name: "Reshape Matter", description: "Can transmute non-magical matter within 30ft" }, { id: "ab2", name: "Dimensional Lock", description: "Prevents teleportation within 60ft" }, { id: "ab3", name: "Summon Drifters", description: "Can summon 1d4 Planar Drifters" }], skills: "Arcana +10, Perception +8, Insight +8", languages: ["All"], dieHard: 2, notes: "Being from the space between planes" },
+
+  // HUMANOID
+  { id: "hum1", name: "Cultist", category: 1, type: ["Humanoid"], keywords: { rarity: "Very Common", size: "Medium", disposition: "Fanatical", tactics: "Swarm" }, attrs: { STR: 10, DEX: 12, CON: 10, INT: 10, WIS: 8, CHA: 10 }, hp: 9, evasion: 11, movement: 30, movement_types: [], attacks: [{ id: "a1", name: "Ritual Dagger", bonus: 3, damage: "1d4+1", damageType: "Piercing", properties: "" }], adaptations: [], malformations: [], abilities: [{ id: "ab1", name: "Dark Devotion", description: "Advantage on saves vs charm and fear" }], skills: "Religion +2, Deception +2", languages: ["Common"], dieHard: 0, notes: "Low-ranking cult member" },
+  { id: "hum2", name: "Cult Enforcer", category: 2, type: ["Humanoid"], keywords: { rarity: "Common", size: "Medium", disposition: "Aggressive", tactics: "Brawler" }, attrs: { STR: 16, DEX: 12, CON: 14, INT: 10, WIS: 10, CHA: 12 }, hp: 32, evasion: 12, movement: 30, movement_types: [], attacks: [{ id: "a1", name: "Heavy Flail", bonus: 6, damage: "2d8+3", damageType: "Bludgeoning", properties: "" }, { id: "a2", name: "Unarmed Strike", bonus: 6, damage: "1d6+3", damageType: "Bludgeoning", properties: "" }], adaptations: [], malformations: [], abilities: [{ id: "ab1", name: "Dark Devotion", description: "Advantage on saves vs charm and fear" }, { id: "ab2", name: "Brutal Strike", description: "Crits on 19-20" }], skills: "Athletics +5, Intimidation +4", languages: ["Common"], dieHard: 1, notes: "Cult muscle and discipline" },
+  { id: "hum3", name: "Cult Magus", category: 3, type: ["Humanoid"], keywords: { rarity: "Uncommon", size: "Medium", disposition: "Calculating", tactics: "Controller" }, attrs: { STR: 10, DEX: 14, CON: 14, INT: 16, WIS: 14, CHA: 16 }, hp: 45, evasion: 13, movement: 30, movement_types: [], attacks: [{ id: "a1", name: "Eldritch Bolt", bonus: 7, damage: "3d8", damageType: "Necrotic", properties: "Range 60ft" }, { id: "a2", name: "Staff", bonus: 4, damage: "1d6+1", damageType: "Bludgeoning", properties: "" }], adaptations: ["Resist Necrotic"], malformations: [], abilities: [{ id: "ab1", name: "Dark Devotion", description: "Advantage on saves vs charm and fear" }, { id: "ab2", name: "Shadow Step", description: "Teleport 30ft between shadows" }, { id: "ab3", name: "Summon Shade", description: "Can summon a Whisper Shade once per day" }], skills: "Arcana +6, Religion +6, Intimidation +6", languages: ["Common", "Abyssal"], dieHard: 1, notes: "High priest or cult leader" },
+
+  // BEAST
+  { id: "bst1", name: "Dire Rat", category: 1, type: ["Beast"], keywords: { rarity: "Very Common", size: "Small", disposition: "Aggressive", tactics: "Swarm" }, attrs: { STR: 8, DEX: 14, CON: 10, INT: 2, WIS: 10, CHA: 4 }, hp: 7, evasion: 13, movement: 30, movement_types: ["Climb"], attacks: [{ id: "a1", name: "Bite", bonus: 4, damage: "1d4+1", damageType: "Piercing", properties: "Disease: DC 10 CON or infected" }], adaptations: ["Darkvision"], malformations: [], abilities: [{ id: "ab1", name: "Pack Tactics", description: "Advantage when ally within 5ft of target" }], skills: "Stealth +4", languages: [], dieHard: 0, notes: "Unnaturally large rodent" },
+  { id: "bst2", name: "Shadow Wolf", category: 2, type: ["Beast", "Spirit"], keywords: { rarity: "Uncommon", size: "Large", disposition: "Predatory", tactics: "Striker" }, attrs: { STR: 16, DEX: 16, CON: 14, INT: 6, WIS: 14, CHA: 8 }, hp: 40, evasion: 14, movement: 50, movement_types: [], attacks: [{ id: "a1", name: "Shadow Bite", bonus: 6, damage: "2d8+3", damageType: "Piercing", properties: "+1d6 cold, knocks prone on hit" }], adaptations: ["Resist Cold", "Resist Necrotic"], malformations: ["Vulnerable to Radiant"], abilities: [{ id: "ab1", name: "Shadow Meld", description: "Invisible in dim light or darkness" }, { id: "ab2", name: "Pack Tactics", description: "Advantage when ally within 5ft of target" }], skills: "Stealth +6, Perception +5, Survival +5", languages: [], dieHard: 1, notes: "Wolf touched by shadow magic" },
+  { id: "bst3", name: "Chimera", category: 3, type: ["Beast"], keywords: { rarity: "Rare", size: "Large", disposition: "Aggressive", tactics: "Boss" }, attrs: { STR: 18, DEX: 12, CON: 18, INT: 4, WIS: 14, CHA: 10 }, hp: 75, evasion: 12, movement: 30, movement_types: ["Fly"], attacks: [{ id: "a1", name: "Lion Bite", bonus: 8, damage: "2d8+4", damageType: "Piercing", properties: "" }, { id: "a2", name: "Goat Horns", bonus: 8, damage: "2d6+4", damageType: "Bludgeoning", properties: "" }, { id: "a3", name: "Dragon Claws", bonus: 8, damage: "2d6+4", damageType: "Slashing", properties: "" }], adaptations: ["Resist Fire"], malformations: [], abilities: [{ id: "ab1", name: "Fire Breath", description: "15ft cone, 5d6 fire, DEX save for half" }, { id: "ab2", name: "Three Heads", description: "Can make all three attacks each turn" }], skills: "Perception +7", languages: [], dieHard: 2, notes: "Three-headed monstrosity" },
+
+  // CONSTRUCT
+  { id: "con1", name: "Clockwork Drone", category: 1, type: ["Construct"], keywords: { rarity: "Uncommon", size: "Small", disposition: "Programmed", tactics: "Swarm" }, attrs: { STR: 10, DEX: 14, CON: 12, INT: 4, WIS: 8, CHA: 1 }, hp: 14, evasion: 13, movement: 25, movement_types: ["Fly"], attacks: [{ id: "a1", name: "Blade Arm", bonus: 4, damage: "1d6+1", damageType: "Slashing", properties: "" }], adaptations: ["Immune to Poison", "Immune to Psychic", "Immune to Charm", "Immune to Frightened"], malformations: ["Vulnerable to Lightning"], abilities: [{ id: "ab1", name: "Patrol Mode", description: "Advantage on Perception while stationary" }], skills: "Perception +2", languages: [], dieHard: 0, notes: "Simple mechanical guardian" },
+  { id: "con2", name: "Iron Guardian", category: 2, type: ["Construct"], keywords: { rarity: "Rare", size: "Large", disposition: "Protective", tactics: "Tank" }, attrs: { STR: 18, DEX: 8, CON: 18, INT: 6, WIS: 10, CHA: 1 }, hp: 60, evasion: 9, movement: 20, movement_types: [], attacks: [{ id: "a1", name: "Slam", bonus: 7, damage: "2d10+4", damageType: "Bludgeoning", properties: "" }], adaptations: ["Immune to Poison", "Immune to Psychic", "Immune to Charm", "Immune to Frightened", "Resist Physical (non-adamantine)"], malformations: ["Vulnerable to Lightning", "Cannot be Healed"], abilities: [{ id: "ab1", name: "Immutable Form", description: "Immune to form-altering effects" }, { id: "ab2", name: "Siege Monster", description: "Double damage to structures" }], skills: "", languages: [], dieHard: 2, notes: "Animated suit of armor" },
+  { id: "con3", name: "War Golem", category: 3, type: ["Construct"], keywords: { rarity: "Very Rare", size: "Huge", disposition: "Programmed", tactics: "Boss" }, attrs: { STR: 22, DEX: 8, CON: 20, INT: 8, WIS: 12, CHA: 1 }, hp: 100, evasion: 9, movement: 30, movement_types: [], attacks: [{ id: "a1", name: "Massive Fist", bonus: 10, damage: "4d8+6", damageType: "Bludgeoning", properties: "Knocks prone" }, { id: "a2", name: "Stomp", bonus: 10, damage: "3d10+6", damageType: "Bludgeoning", properties: "Only vs prone targets" }], adaptations: ["Immune to Poison", "Immune to Psychic", "Immune to Charm", "Immune to Frightened", "Immune to Physical (non-adamantine)", "Immune to Fire"], malformations: ["Vulnerable to Lightning"], abilities: [{ id: "ab1", name: "Immutable Form", description: "Immune to form-altering effects" }, { id: "ab2", name: "Siege Monster", description: "Double damage to structures" }, { id: "ab3", name: "Rampage", description: "When reduced below half HP, gains extra attack" }], skills: "", languages: ["Understands creator's language"], dieHard: 3, notes: "Ancient weapon of war" },
+
+  // UNDEAD
+  { id: "und1", name: "Shambling Corpse", category: 1, type: ["Undead"], keywords: { rarity: "Very Common", size: "Medium", disposition: "Aggressive", tactics: "Swarm" }, attrs: { STR: 12, DEX: 6, CON: 14, INT: 3, WIS: 6, CHA: 5 }, hp: 15, evasion: 8, movement: 20, movement_types: [], attacks: [{ id: "a1", name: "Slam", bonus: 3, damage: "1d6+1", damageType: "Bludgeoning", properties: "" }], adaptations: ["Immune to Poison", "Immune to Exhaustion"], malformations: ["Vulnerable to Radiant", "Vulnerable to Fire"], abilities: [{ id: "ab1", name: "Undead Fortitude", description: "DC 5+damage CON save to stay at 1 HP instead of dying" }], skills: "", languages: [], dieHard: 0, notes: "Mindless animated corpse" },
+  { id: "und2", name: "Ghoul", category: 2, type: ["Undead"], keywords: { rarity: "Common", size: "Medium", disposition: "Predatory", tactics: "Striker" }, attrs: { STR: 14, DEX: 16, CON: 12, INT: 8, WIS: 10, CHA: 8 }, hp: 32, evasion: 14, movement: 35, movement_types: ["Climb"], attacks: [{ id: "a1", name: "Claws", bonus: 5, damage: "2d6+2", damageType: "Slashing", properties: "DC 12 CON or paralyzed 1 minute" }, { id: "a2", name: "Bite", bonus: 5, damage: "2d4+2", damageType: "Piercing", properties: "" }], adaptations: ["Immune to Poison", "Immune to Exhaustion", "Immune to Charm"], malformations: ["Vulnerable to Radiant"], abilities: [{ id: "ab1", name: "Paralyzing Touch", description: "Claws paralyze on failed save" }], skills: "Stealth +4", languages: ["Common"], dieHard: 0, notes: "Corpse-eating undead" },
+  { id: "und3", name: "Revenant", category: 3, type: ["Undead"], keywords: { rarity: "Rare", size: "Medium", disposition: "Vengeful", tactics: "Striker" }, attrs: { STR: 18, DEX: 14, CON: 18, INT: 12, WIS: 16, CHA: 16 }, hp: 70, evasion: 13, movement: 30, movement_types: [], attacks: [{ id: "a1", name: "Vengeful Fist", bonus: 8, damage: "2d8+4", damageType: "Bludgeoning", properties: "+2d6 necrotic vs sworn enemy" }], adaptations: ["Immune to Poison", "Immune to Exhaustion", "Immune to Charm", "Immune to Frightened", "Resist Necrotic", "Resist Physical (non-silver)"], malformations: [], abilities: [{ id: "ab1", name: "Vengeful Tracker", description: "Always knows location of sworn enemy" }, { id: "ab2", name: "Regeneration", description: "Regains 10 HP at start of turn unless radiant damage taken" }, { id: "ab3", name: "Rejuvenation", description: "Returns 24 hours after death unless vengeance complete" }], skills: "Athletics +7, Perception +6, Intimidation +6", languages: ["Languages it knew in life"], dieHard: 2, notes: "Undead driven by revenge" },
+];
+
 const BACKGROUND_TIERS = {
   "Minimal (Trained Skill)": { desc: "Getting started in your field.", backgrounds: ["High School Athlete", "Line Cook", "Medical Student", "Mystic", "Pick Pocket", "Student", "Investigative Assistant", "Go-Between"] },
   "Low (5 Ranks)": { desc: "Skilled in your chosen field.", backgrounds: ["College Athlete", "Junior Chef", "Medical Resident", "Magician", "Gambler", "Assistant", "Investigator", "Middle Man"] },
@@ -449,6 +568,16 @@ export default function TrinityDossiers() {
   const [theme, setTheme] = useState("noir");
   const [firmName, setFirmName] = useState("ROOKWREN & LOCKE");
   const [firmSub, setFirmSub] = useState("CONTRACTUAL OBLIGATIONS DIVISION");
+  // Monster Creator - Independent from character sheets
+  const [monstersOpen, setMonstersOpen] = useState(false);
+  const [monsters, setMonsters] = useState(() => {
+    const saved = localStorage.getItem(MONSTER_STORAGE_KEY);
+    const parsed = saved ? JSON.parse(saved) : [];
+    return parsed.length > 0 ? parsed : SAMPLE_MONSTERS;
+  });
+  const [monsterEdit, setMonsterEdit] = useState(null);
+  const [monsterTab, setMonsterTab] = useState("list");
+  const [monsterTypeFilter, setMonsterTypeFilter] = useState("All");
   const saveTimeout = useRef(null);
   const isMobile = useIsMobile();
 
@@ -466,6 +595,24 @@ export default function TrinityDossiers() {
   }, []);
   const changeTheme = (t) => { setTheme(t); try { localStorage.setItem("rookwren-theme", t); } catch {} };
   const updateFirm = (name, sub) => { setFirmName(name); setFirmSub(sub); try { localStorage.setItem("rookwren-firm", JSON.stringify({ name, sub })); } catch {} };
+
+  // Load monsters from localStorage (or use samples if empty)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(MONSTER_STORAGE_KEY);
+      const parsed = stored ? JSON.parse(stored) : [];
+      if (parsed.length > 0) {
+        setMonsters(parsed);
+      } else {
+        setMonsters(SAMPLE_MONSTERS);
+      }
+    } catch {}
+  }, []);
+
+  const saveMonsters = useCallback((data) => {
+    setMonsters(data);
+    try { localStorage.setItem(MONSTER_STORAGE_KEY, JSON.stringify(data)); } catch {}
+  }, []);
 
   const T = THEMES[theme] || THEMES.noir;
   styles = getStyles(T);
@@ -635,6 +782,166 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
     a.download = `${char.name.replace(/[^a-zA-Z0-9]/g, "_")}_journal.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // Monster Export Functions
+  const exportMonsterJSON = (monster) => {
+    const blob = new Blob([JSON.stringify(monster, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(monster.name || "monster").replace(/[^a-zA-Z0-9]/g, "_")}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportMonsterText = (monster) => {
+    const divider = "═".repeat(50);
+    const mod = (score) => {
+      const m = getModifier(score);
+      return m >= 0 ? `+${m}` : `${m}`;
+    };
+    const lines = [
+      divider,
+      `  ${(monster.name || "Unnamed Creature").toUpperCase()}`,
+      divider,
+      `Category ${monster.category} | ${monster.keywords.size} ${monster.type.join("/")}`,
+      `${monster.keywords.rarity} | ${monster.keywords.disposition} | ${monster.keywords.tactics}`,
+      "",
+      "── ATTRIBUTES ──",
+      `STR ${monster.attrs.STR} (${mod(monster.attrs.STR)})  DEX ${monster.attrs.DEX} (${mod(monster.attrs.DEX)})  CON ${monster.attrs.CON} (${mod(monster.attrs.CON)})`,
+      `INT ${monster.attrs.INT} (${mod(monster.attrs.INT)})  WIS ${monster.attrs.WIS} (${mod(monster.attrs.WIS)})  CHA ${monster.attrs.CHA} (${mod(monster.attrs.CHA)})`,
+      "",
+      "── COMBAT ──",
+      `HP: ${monster.hp}  |  EVA: ${monster.evasion}  |  Movement: ${monster.movement} ft${monster.movement_types.length ? " (" + monster.movement_types.join(", ") + ")" : ""}`,
+      `Die Hard: ${monster.dieHard}/5`,
+    ];
+    if (monster.attacks && monster.attacks.length) {
+      lines.push("", "── ATTACKS ──");
+      monster.attacks.forEach(a => {
+        lines.push(`• ${a.name}: ${a.bonus ? "+" + a.bonus : "+0"} to hit, ${a.damage || "1d6"} ${a.damageType || ""} ${a.properties || ""}`);
+      });
+    }
+    if (monster.adaptations && monster.adaptations.length) {
+      lines.push("", "── ADAPTATIONS ──");
+      monster.adaptations.forEach(a => lines.push(`• ${a}`));
+    }
+    if (monster.malformations && monster.malformations.length) {
+      lines.push("", "── MALFORMATIONS ──");
+      monster.malformations.forEach(m => lines.push(`• ${m}`));
+    }
+    if (monster.abilities && monster.abilities.length) {
+      lines.push("", "── ABILITIES ──");
+      monster.abilities.forEach(ab => {
+        lines.push(`• ${ab.name}: ${ab.description}`);
+      });
+    }
+    if (monster.skills) {
+      lines.push("", `Skills: ${monster.skills}`);
+    }
+    if (monster.languages && monster.languages.length) {
+      lines.push(`Languages: ${monster.languages.join(", ")}`);
+    }
+    if (monster.notes) {
+      lines.push("", "── NOTES ──", monster.notes);
+    }
+    lines.push("", divider);
+
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(monster.name || "monster").replace(/[^a-zA-Z0-9]/g, "_")}_statblock.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Monster CRUD operations
+  const addMonster = () => {
+    const newMonster = defaultMonster();
+    setMonsterEdit(newMonster);
+    setMonsterTab("edit");
+  };
+
+  const saveMonster = (monster) => {
+    const exists = monsters.find(m => m.id === monster.id);
+    const updated = exists
+      ? monsters.map(m => m.id === monster.id ? monster : m)
+      : [...monsters, monster];
+    saveMonsters(updated);
+    setMonsterEdit(null);
+    setMonsterTab("list");
+  };
+
+  const deleteMonster = (id) => {
+    saveMonsters(monsters.filter(m => m.id !== id));
+    if (monsterEdit?.id === id) {
+      setMonsterEdit(null);
+      setMonsterTab("list");
+    }
+  };
+
+  const editMonster = (monster) => {
+    setMonsterEdit({ ...monster });
+    setMonsterTab("edit");
+  };
+
+  const updateMonsterEdit = (field, value) => {
+    if (!monsterEdit) return;
+    if (field.includes(".")) {
+      const [parent, child] = field.split(".");
+      setMonsterEdit(prev => ({ ...prev, [parent]: { ...prev[parent], [child]: value } }));
+    } else {
+      setMonsterEdit(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const addMonsterAttack = () => {
+    if (!monsterEdit) return;
+    const newAttack = { id: Date.now().toString(), name: "", bonus: 0, damage: "1d6", damageType: "", properties: "" };
+    setMonsterEdit(prev => ({ ...prev, attacks: [...(prev.attacks || []), newAttack] }));
+  };
+
+  const updateMonsterAttack = (attackId, field, value) => {
+    if (!monsterEdit) return;
+    setMonsterEdit(prev => ({
+      ...prev,
+      attacks: (prev.attacks || []).map(a => a.id === attackId ? { ...a, [field]: value } : a)
+    }));
+  };
+
+  const removeMonsterAttack = (attackId) => {
+    if (!monsterEdit) return;
+    setMonsterEdit(prev => ({ ...prev, attacks: (prev.attacks || []).filter(a => a.id !== attackId) }));
+  };
+
+  const addMonsterAbility = () => {
+    if (!monsterEdit) return;
+    const newAbility = { id: Date.now().toString(), name: "", description: "" };
+    setMonsterEdit(prev => ({ ...prev, abilities: [...(prev.abilities || []), newAbility] }));
+  };
+
+  const updateMonsterAbility = (abilityId, field, value) => {
+    if (!monsterEdit) return;
+    setMonsterEdit(prev => ({
+      ...prev,
+      abilities: (prev.abilities || []).map(a => a.id === abilityId ? { ...a, [field]: value } : a)
+    }));
+  };
+
+  const removeMonsterAbility = (abilityId) => {
+    if (!monsterEdit) return;
+    setMonsterEdit(prev => ({ ...prev, abilities: (prev.abilities || []).filter(a => a.id !== abilityId) }));
+  };
+
+  const applyTypePreset = (typeName) => {
+    if (!monsterEdit || !CREATURE_TYPE_PRESETS[typeName]) return;
+    const preset = CREATURE_TYPE_PRESETS[typeName];
+    const currentAdaptations = monsterEdit.adaptations || [];
+    const currentMalformations = monsterEdit.malformations || [];
+    const newAdaptations = [...new Set([...currentAdaptations, ...preset.immunities.map(i => `Immunity: ${i}`), ...preset.resistances.map(r => `Resistance: ${r}`)])];
+    const newMalformations = [...new Set([...currentMalformations, ...preset.vulnerabilities.map(v => `Vulnerability: ${v}`)])];
+    setMonsterEdit(prev => ({ ...prev, adaptations: newAdaptations, malformations: newMalformations }));
   };
 
   const removeAgent = (idx) => {
@@ -922,6 +1229,8 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
         @keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
         @keyframes typeIn { 0% { width: 0; } 100% { width: 100%; } }
         @keyframes flicker { 0%,97%,100% { opacity: 1; } 98% { opacity: 0.7; } 99% { opacity: 0.9; } }
+        @keyframes arcaneGlow { 0%, 100% { box-shadow: 0 0 8px #8b5cf6, 0 0 16px #8b5cf644; } 50% { box-shadow: 0 0 16px #8b5cf6, 0 0 32px #8b5cf688; } }
+        @keyframes eyePulse { 0%, 100% { filter: drop-shadow(0 0 4px #8b5cf6); } 50% { filter: drop-shadow(0 0 10px #c4b5fd); } }
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
@@ -965,6 +1274,14 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
             </div>
           </div>
           <div style={styles.headerRight}>
+            <button onClick={() => setMonstersOpen(true)} style={rs("monsterBtn")} title="Bestiary">
+              <svg width={isMobile ? 20 : 24} height={isMobile ? 16 : 18} viewBox="0 0 28 20" style={styles.monsterEye}>
+                <ellipse cx="14" cy="10" rx="12" ry="8" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="14" cy="10" r="4" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="14" cy="10" r="1.5" fill="currentColor"/>
+              </svg>
+              <span style={rs("monsterText")}>{isMobile ? "" : "BESTIARY"}</span>
+            </button>
             <div style={rs("classifiedStamp")}>CLASSIFIED</div>
             <div style={styles.saveIndicator}>
               {saving ? <span style={{ animation: "pulse 1s infinite" }}>◉ SAVING</span> : <span style={{ opacity: 0.4 }}>◉ SYNCED</span>}
@@ -2034,6 +2351,398 @@ ${entries.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).map(e => `
           </div>
         </div>
       )}
+
+      {/* MONSTER CREATOR MODAL */}
+      {monstersOpen && (
+        <div style={styles.monsterOverlay} onClick={(e) => { if (e.target === e.currentTarget) { setMonstersOpen(false); setMonsterEdit(null); setMonsterTab("list"); } }}>
+          <div style={rs("monsterPage")}>
+            {/* SIDEBAR */}
+            {monsterTab === "list" && (
+              <div style={styles.monsterSidebar}>
+                <div style={styles.monsterSidebarHeader}>Filter by Type</div>
+                {["All", ...MONSTER_TYPES].map(type => {
+                  const count = type === "All" ? monsters.length : monsters.filter(m => (m.type || []).includes(type)).length;
+                  return (
+                    <div key={type} onClick={() => setMonsterTypeFilter(type)}
+                      style={{ ...styles.monsterSidebarTab, ...(monsterTypeFilter === type ? styles.monsterSidebarTabActive : {}) }}>
+                      <span><span style={{ marginRight: 8, opacity: 0.7 }}>{MONSTER_TYPE_ICONS[type]}</span>{type}</span>
+                      <span style={styles.monsterSidebarCount}>{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* MAIN CONTENT */}
+            <div style={styles.monsterMain}>
+              <div style={styles.monsterHeader}>
+                <div style={styles.monsterHeaderLeft}>
+                  <svg width="28" height="28" viewBox="0 0 28 20" style={styles.monsterHeaderEye}>
+                    <ellipse cx="14" cy="10" rx="12" ry="8" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                    <circle cx="14" cy="10" r="4" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                    <circle cx="14" cy="10" r="1.5" fill="currentColor"/>
+                  </svg>
+                  <div>
+                    <div style={styles.monsterTitle}>BESTIARY</div>
+                    <div style={styles.monsterSubtitle}>{monsterTypeFilter === "All" ? "ALL CREATURES" : monsterTypeFilter.toUpperCase()}</div>
+                  </div>
+                </div>
+                <div style={styles.monsterHeaderRight}>
+                  <span style={styles.monsterCount}>{monsters.length} total</span>
+                  <button onClick={() => { setMonstersOpen(false); setMonsterEdit(null); setMonsterTab("list"); }} style={styles.monsterCloseBtn}>CLOSE</button>
+                </div>
+              </div>
+
+              <div style={styles.monsterContent}>
+                {monsterTab === "list" && (
+                  <div style={styles.monsterListView}>
+                    <div style={styles.monsterToolbar}>
+                      <button onClick={addMonster} style={styles.monsterAddBtn}>
+                        <span style={{ fontSize: 16 }}>+</span> NEW CREATURE
+                      </button>
+                    </div>
+                    {(() => {
+                      const filtered = monsterTypeFilter === "All"
+                        ? monsters
+                        : monsters.filter(m => (m.type || []).includes(monsterTypeFilter));
+                      const sorted = [...filtered].sort((a, b) => a.category - b.category);
+                      const grouped = sorted.reduce((acc, m) => {
+                        const tier = m.category;
+                        if (!acc[tier]) acc[tier] = [];
+                        acc[tier].push(m);
+                        return acc;
+                      }, {});
+
+                      if (filtered.length === 0) {
+                        return (
+                          <div style={styles.monsterEmpty}>
+                            No creatures found.<br/>
+                            <span style={{ opacity: 0.6 }}>Create a new creature to begin.</span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div style={styles.monsterGrid}>
+                          {Object.keys(grouped).sort((a, b) => a - b).map(tier => (
+                            <div key={tier} style={styles.monsterTierGroup}>
+                              <div style={styles.monsterTierHeader}>
+                                <span style={{ display: "inline-block", padding: "4px 12px", borderRadius: 20, background: TIER_COLORS[tier]?.bg || "#f5f5f5", color: TIER_COLORS[tier]?.text || "#666", border: `1px solid ${TIER_COLORS[tier]?.border || "#999"}`, fontWeight: 600, fontSize: 11, letterSpacing: 1 }}>Category {tier}</span>
+                              </div>
+                              {grouped[tier].map(m => (
+                                <div key={m.id} style={styles.monsterCard}>
+                                  <div style={styles.monsterCardInfo}>
+                                    <div style={styles.monsterCardHeader}>
+                                      <div style={styles.monsterCardName}>{m.name || "Unnamed"}</div>
+                                      <div style={styles.monsterCardCategory}>CAT {m.category}</div>
+                                    </div>
+                                    <div style={styles.monsterCardType}>{m.keywords.size} {m.type.join(", ") || "Unknown"}</div>
+                                    <div style={styles.monsterCardStats}>
+                                      <span>HP {m.hp}</span>
+                                      <span>EVA {m.evasion}</span>
+                                      <span>{m.keywords.rarity}</span>
+                                    </div>
+                                  </div>
+                                  <div style={styles.monsterCardActions}>
+                                    <button onClick={() => editMonster(m)} style={styles.monsterCardBtn}>Edit</button>
+                                    <button onClick={() => exportMonsterText(m)} style={styles.monsterCardBtn}>TXT</button>
+                                    <button onClick={() => deleteMonster(m.id)} style={{ ...styles.monsterCardBtn, ...styles.monsterCardBtnDanger }}>✕</button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+              {monsterTab === "edit" && monsterEdit && (
+                <div style={styles.monsterEditView}>
+                  <div style={styles.monsterEditToolbar}>
+                    <button onClick={() => { setMonsterTab("list"); setMonsterEdit(null); }} style={styles.monsterBackBtn}>
+                      ← Back
+                    </button>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => exportMonsterJSON(monsterEdit)} style={styles.monsterExportBtn}>JSON</button>
+                      <button onClick={() => exportMonsterText(monsterEdit)} style={styles.monsterExportBtn}>TXT</button>
+                      <button onClick={() => saveMonster(monsterEdit)} style={styles.monsterSaveBtn}>SAVE</button>
+                    </div>
+                  </div>
+
+                  <div style={styles.monsterForm}>
+                    {/* IDENTITY SECTION */}
+                    <div style={styles.monsterSection}>
+                      <div style={styles.monsterSectionTitle}>IDENTITY</div>
+                      <div style={styles.monsterFieldRow}>
+                        <div style={{ flex: 2 }}>
+                          <label style={styles.monsterLabel}>Name</label>
+                          <input type="text" value={monsterEdit.name} onChange={(e) => updateMonsterEdit("name", e.target.value)}
+                            style={styles.monsterInput} placeholder="Creature name..."/>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.monsterLabel}>Category (0-6)</label>
+                          <input type="number" min={0} max={6} value={monsterEdit.category} onChange={(e) => updateMonsterEdit("category", parseInt(e.target.value) || 0)}
+                            style={styles.monsterInput}/>
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 8 }}>
+                        <label style={styles.monsterLabel}>Type(s)</label>
+                        <div style={styles.monsterTypeGrid}>
+                          {MONSTER_TYPES.map(t => {
+                            const active = (monsterEdit.type || []).includes(t);
+                            return (
+                              <button key={t} onClick={() => {
+                                const current = monsterEdit.type || [];
+                                const updated = active ? current.filter(x => x !== t) : [...current, t];
+                                updateMonsterEdit("type", updated);
+                                if (!active && CREATURE_TYPE_PRESETS[t]) applyTypePreset(t);
+                              }} style={{ ...styles.monsterTypeBtn, ...(active ? styles.monsterTypeBtnActive : {}) }}>
+                                {active ? "✓ " : ""}{t}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* KEYWORDS SECTION */}
+                    <div style={styles.monsterSection}>
+                      <div style={styles.monsterSectionTitle}>KEYWORDS</div>
+                      <div style={styles.monsterFieldRow}>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.monsterLabel}>Rarity</label>
+                          <select value={monsterEdit.keywords.rarity} onChange={(e) => updateMonsterEdit("keywords.rarity", e.target.value)} style={styles.monsterSelect}>
+                            {MONSTER_RARITIES.map(r => <option key={r} value={r}>{r}</option>)}
+                          </select>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.monsterLabel}>Size</label>
+                          <select value={monsterEdit.keywords.size} onChange={(e) => updateMonsterEdit("keywords.size", e.target.value)} style={styles.monsterSelect}>
+                            {MONSTER_SIZES.map(s => <option key={s} value={s}>{s} ({SIZE_MODIFIERS[s]?.example})</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div style={styles.monsterFieldRow}>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.monsterLabel}>Disposition</label>
+                          <select value={monsterEdit.keywords.disposition} onChange={(e) => updateMonsterEdit("keywords.disposition", e.target.value)} style={styles.monsterSelect}>
+                            {MONSTER_DISPOSITIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                          </select>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.monsterLabel}>Tactics</label>
+                          <select value={monsterEdit.keywords.tactics} onChange={(e) => updateMonsterEdit("keywords.tactics", e.target.value)} style={styles.monsterSelect}>
+                            {MONSTER_TACTICS.map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div style={styles.monsterSizeHint}>
+                        Size modifiers: EVA {SIZE_MODIFIERS[monsterEdit.keywords.size]?.evaBonus >= 0 ? "+" : ""}{SIZE_MODIFIERS[monsterEdit.keywords.size]?.evaBonus}, HP {SIZE_MODIFIERS[monsterEdit.keywords.size]?.hpBonus >= 0 ? "+" : ""}{SIZE_MODIFIERS[monsterEdit.keywords.size]?.hpBonus}
+                      </div>
+                    </div>
+
+                    {/* ATTRIBUTES SECTION */}
+                    <div style={styles.monsterSection}>
+                      <div style={styles.monsterSectionTitle}>ATTRIBUTES</div>
+                      <div style={styles.monsterAttrGrid}>
+                        {ATTR_LIST.map(attr => (
+                          <div key={attr} style={styles.monsterAttrCard}>
+                            <div style={styles.monsterAttrName}>{attr}</div>
+                            <input type="number" value={monsterEdit.attrs[attr]} onChange={(e) => updateMonsterEdit(`attrs.${attr}`, parseInt(e.target.value) || 10)}
+                              style={styles.monsterAttrInput}/>
+                            <div style={styles.monsterAttrMod}>{fmtMod(getModifier(monsterEdit.attrs[attr]))}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* COMBAT STATS SECTION */}
+                    <div style={styles.monsterSection}>
+                      <div style={styles.monsterSectionTitle}>COMBAT</div>
+                      <div style={styles.monsterFieldRow}>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.monsterLabel}>HP</label>
+                          <input type="number" value={monsterEdit.hp} onChange={(e) => updateMonsterEdit("hp", parseInt(e.target.value) || 0)}
+                            style={styles.monsterInput}/>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.monsterLabel}>Evasion</label>
+                          <input type="number" value={monsterEdit.evasion} onChange={(e) => updateMonsterEdit("evasion", parseInt(e.target.value) || 0)}
+                            style={styles.monsterInput}/>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.monsterLabel}>Movement (ft)</label>
+                          <input type="number" value={monsterEdit.movement} onChange={(e) => updateMonsterEdit("movement", parseInt(e.target.value) || 0)}
+                            style={styles.monsterInput}/>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.monsterLabel}>Die Hard (0-5)</label>
+                          <input type="number" min={0} max={5} value={monsterEdit.dieHard} onChange={(e) => updateMonsterEdit("dieHard", parseInt(e.target.value) || 0)}
+                            style={styles.monsterInput}/>
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 8 }}>
+                        <label style={styles.monsterLabel}>Movement Types</label>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          {MONSTER_MOVEMENT_TYPES.map(mt => {
+                            const active = (monsterEdit.movement_types || []).includes(mt);
+                            return (
+                              <button key={mt} onClick={() => {
+                                const current = monsterEdit.movement_types || [];
+                                updateMonsterEdit("movement_types", active ? current.filter(x => x !== mt) : [...current, mt]);
+                              }} style={{ ...styles.monsterTypeBtn, ...(active ? styles.monsterTypeBtnActive : {}) }}>
+                                {active ? "✓ " : ""}{mt}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ATTACKS SECTION */}
+                    <div style={styles.monsterSection}>
+                      <div style={styles.monsterSectionTitle}>ATTACKS</div>
+                      {(monsterEdit.attacks || []).map(atk => (
+                        <div key={atk.id} style={styles.monsterAttackRow}>
+                          <input type="text" value={atk.name} onChange={(e) => updateMonsterAttack(atk.id, "name", e.target.value)}
+                            style={{ ...styles.monsterInput, flex: 2 }} placeholder="Attack name"/>
+                          <input type="number" value={atk.bonus} onChange={(e) => updateMonsterAttack(atk.id, "bonus", parseInt(e.target.value) || 0)}
+                            style={{ ...styles.monsterInput, flex: 0.5, minWidth: 50 }} placeholder="+0"/>
+                          <input type="text" value={atk.damage} onChange={(e) => updateMonsterAttack(atk.id, "damage", e.target.value)}
+                            style={{ ...styles.monsterInput, flex: 1 }} placeholder="1d6"/>
+                          <input type="text" value={atk.damageType} onChange={(e) => updateMonsterAttack(atk.id, "damageType", e.target.value)}
+                            style={{ ...styles.monsterInput, flex: 1 }} placeholder="Type"/>
+                          <input type="text" value={atk.properties} onChange={(e) => updateMonsterAttack(atk.id, "properties", e.target.value)}
+                            style={{ ...styles.monsterInput, flex: 1.5 }} placeholder="Properties"/>
+                          <button onClick={() => removeMonsterAttack(atk.id)} style={styles.monsterRemoveBtn}>✕</button>
+                        </div>
+                      ))}
+                      <button onClick={addMonsterAttack} style={styles.monsterAddItemBtn}>+ Add Attack</button>
+                    </div>
+
+                    {/* ADAPTATIONS & MALFORMATIONS */}
+                    <div style={styles.monsterSection}>
+                      <div style={styles.monsterSectionTitle}>ADAPTATIONS (Immunities, Resistances)</div>
+                      <div style={styles.monsterTagsWrap}>
+                        {(monsterEdit.adaptations || []).map((a, i) => (
+                          <span key={i} style={styles.monsterTag}>
+                            {a}
+                            <span onClick={() => updateMonsterEdit("adaptations", monsterEdit.adaptations.filter((_, idx) => idx !== i))} style={styles.monsterTagX}>✕</span>
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
+                        <input type="text" id="adaptationInput" placeholder="Add adaptation..."
+                          style={{ ...styles.monsterInput, flex: 1 }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && e.target.value.trim()) {
+                              updateMonsterEdit("adaptations", [...(monsterEdit.adaptations || []), e.target.value.trim()]);
+                              e.target.value = "";
+                            }
+                          }}/>
+                        <button onClick={() => {
+                          const input = document.getElementById("adaptationInput");
+                          if (input && input.value.trim()) {
+                            updateMonsterEdit("adaptations", [...(monsterEdit.adaptations || []), input.value.trim()]);
+                            input.value = "";
+                          }
+                        }} style={styles.monsterAddItemBtn}>+</button>
+                      </div>
+                    </div>
+
+                    <div style={styles.monsterSection}>
+                      <div style={styles.monsterSectionTitle}>MALFORMATIONS (Vulnerabilities)</div>
+                      <div style={styles.monsterTagsWrap}>
+                        {(monsterEdit.malformations || []).map((m, i) => (
+                          <span key={i} style={{ ...styles.monsterTag, ...styles.monsterTagDanger }}>
+                            {m}
+                            <span onClick={() => updateMonsterEdit("malformations", monsterEdit.malformations.filter((_, idx) => idx !== i))} style={styles.monsterTagX}>✕</span>
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
+                        <input type="text" id="malformationInput" placeholder="Add malformation..."
+                          style={{ ...styles.monsterInput, flex: 1 }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && e.target.value.trim()) {
+                              updateMonsterEdit("malformations", [...(monsterEdit.malformations || []), e.target.value.trim()]);
+                              e.target.value = "";
+                            }
+                          }}/>
+                        <button onClick={() => {
+                          const input = document.getElementById("malformationInput");
+                          if (input && input.value.trim()) {
+                            updateMonsterEdit("malformations", [...(monsterEdit.malformations || []), input.value.trim()]);
+                            input.value = "";
+                          }
+                        }} style={styles.monsterAddItemBtn}>+</button>
+                      </div>
+                    </div>
+
+                    {/* ABILITIES SECTION */}
+                    <div style={styles.monsterSection}>
+                      <div style={styles.monsterSectionTitle}>ABILITIES</div>
+                      {(monsterEdit.abilities || []).map(ab => (
+                        <div key={ab.id} style={styles.monsterAbilityRow}>
+                          <input type="text" value={ab.name} onChange={(e) => updateMonsterAbility(ab.id, "name", e.target.value)}
+                            style={{ ...styles.monsterInput, marginBottom: 4 }} placeholder="Ability name"/>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            <textarea value={ab.description} onChange={(e) => updateMonsterAbility(ab.id, "description", e.target.value)}
+                              style={{ ...styles.monsterTextarea, flex: 1 }} rows={2} placeholder="Description..."/>
+                            <button onClick={() => removeMonsterAbility(ab.id)} style={styles.monsterRemoveBtn}>✕</button>
+                          </div>
+                        </div>
+                      ))}
+                      <button onClick={addMonsterAbility} style={styles.monsterAddItemBtn}>+ Add Ability</button>
+                    </div>
+
+                    {/* SKILLS & LANGUAGES */}
+                    <div style={styles.monsterSection}>
+                      <div style={styles.monsterSectionTitle}>SKILLS & LANGUAGES</div>
+                      <div style={styles.monsterFieldRow}>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.monsterLabel}>Skills</label>
+                          <input type="text" value={monsterEdit.skills} onChange={(e) => updateMonsterEdit("skills", e.target.value)}
+                            style={styles.monsterInput} placeholder="Stealth +5, Perception +3..."/>
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 8 }}>
+                        <label style={styles.monsterLabel}>Languages</label>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          {Object.values(LANGUAGES).flat().map(lang => {
+                            const active = (monsterEdit.languages || []).includes(lang);
+                            return (
+                              <button key={lang} onClick={() => {
+                                const current = monsterEdit.languages || [];
+                                updateMonsterEdit("languages", active ? current.filter(x => x !== lang) : [...current, lang]);
+                              }} style={{ ...styles.monsterTypeBtn, padding: "3px 8px", fontSize: 10, ...(active ? styles.monsterTypeBtnActive : {}) }}>
+                                {active ? "✓ " : ""}{lang}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* NOTES */}
+                    <div style={styles.monsterSection}>
+                      <div style={styles.monsterSectionTitle}>NOTES</div>
+                      <textarea value={monsterEdit.notes} onChange={(e) => updateMonsterEdit("notes", e.target.value)}
+                        style={styles.monsterTextarea} rows={4} placeholder="Lore, behavior, tactics, special conditions..."/>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={styles.monsterFooter}>
+              TRINITY INVESTIGATIONS — CREATURE DATABASE
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -3069,6 +3778,326 @@ function getStyles(T) { return {
     color: T.accentDim, textAlign: "center", marginTop: 40, paddingTop: 16,
     borderTop: `1px solid ${T.pageBorder}`,
   },
+
+  // Monster Creator Styles - Theme Matching with Sidebar
+  monsterBtn: {
+    display: "flex", alignItems: "center", gap: 8,
+    background: `linear-gradient(180deg, ${T.cardBg} 0%, ${T.bg} 100%)`,
+    border: `2px solid ${T.accent}`, borderRadius: 4,
+    padding: "6px 14px", cursor: "pointer", outline: "none",
+    boxShadow: `0 2px 8px ${T.accent}33`,
+    position: "relative", overflow: "visible",
+    transition: "all 0.3s",
+  },
+  monsterEye: {
+    color: T.accent,
+    filter: `drop-shadow(0 0 4px ${T.accent})`,
+    transition: "all 0.3s",
+  },
+  monsterText: {
+    fontFamily: "'Special Elite', cursive",
+    fontSize: 11, color: T.accent, letterSpacing: 2,
+    textShadow: `0 0 8px ${T.accent}88`,
+    fontWeight: 700,
+  },
+  monsterOverlay: {
+    position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+    background: "rgba(0, 0, 0, 0.92)", zIndex: 1000,
+    display: "flex", justifyContent: "center", alignItems: "flex-start",
+    padding: "24px 16px", overflowY: "auto",
+    animation: "fadeIn 0.3s ease",
+  },
+  monsterPage: {
+    width: "100%", maxWidth: 1100, position: "relative", overflow: "hidden",
+    background: T.bg,
+    borderRadius: 4,
+    boxShadow: `0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px ${T.border}`,
+    border: `1px solid ${T.border}`,
+    display: "flex", flexDirection: "row",
+  },
+  monsterSidebar: {
+    width: 180, flexShrink: 0, background: T.cardBg,
+    borderRight: `1px solid ${T.border}`,
+    display: "flex", flexDirection: "column",
+  },
+  monsterSidebarHeader: {
+    padding: "16px 12px", borderBottom: `1px solid ${T.border}`,
+    fontFamily: "'Special Elite', cursive", fontSize: 10, letterSpacing: 2,
+    color: T.muted, textTransform: "uppercase",
+  },
+  monsterSidebarTab: {
+    padding: "12px 16px", cursor: "pointer",
+    fontFamily: "'Courier Prime', monospace", fontSize: 12,
+    color: T.muted, borderBottom: `1px solid ${T.border}22`,
+    transition: "all 0.15s", display: "flex", justifyContent: "space-between",
+    alignItems: "center",
+  },
+  monsterSidebarTabActive: {
+    background: T.bg, color: T.accent,
+    borderLeft: `3px solid ${T.accent}`,
+    marginLeft: -1,
+  },
+  monsterSidebarCount: {
+    fontSize: 10, opacity: 0.6,
+  },
+  monsterMain: {
+    flex: 1, display: "flex", flexDirection: "column", minWidth: 0,
+  },
+  monsterHeader: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    padding: "16px 20px",
+    background: T.cardBg,
+    borderBottom: `1px solid ${T.border}`,
+    flexWrap: "wrap", gap: 12,
+  },
+  monsterHeaderLeft: {
+    display: "flex", alignItems: "center", gap: 12,
+  },
+  monsterHeaderEye: {
+    color: T.accent,
+    filter: `drop-shadow(0 0 6px ${T.accent})`,
+  },
+  monsterTitle: {
+    fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900,
+    color: T.text, letterSpacing: 3,
+  },
+  monsterSubtitle: {
+    fontFamily: "'Special Elite', cursive", fontSize: 9, letterSpacing: 3,
+    color: T.muted, marginTop: 2,
+  },
+  monsterHeaderRight: {
+    display: "flex", alignItems: "center", gap: 12,
+  },
+  monsterCount: {
+    fontFamily: "'Courier Prime', monospace", fontSize: 11, color: T.muted,
+    letterSpacing: 1,
+  },
+  monsterCloseBtn: {
+    background: T.accent, border: "none", borderRadius: 3,
+    color: T.bg, fontFamily: "'Special Elite', cursive", fontSize: 11,
+    letterSpacing: 2, padding: "8px 16px", cursor: "pointer", outline: "none",
+    fontWeight: 700,
+  },
+  monsterContent: {
+    padding: "20px", flex: 1, overflowY: "auto",
+    maxHeight: "calc(100vh - 180px)",
+  },
+  monsterToolbar: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    marginBottom: 20, gap: 12,
+  },
+  monsterAddBtn: {
+    display: "flex", alignItems: "center", gap: 8,
+    background: `linear-gradient(180deg, ${T.cardBg} 0%, ${T.bg} 100%)`,
+    border: `2px solid ${T.accent}66`, borderRadius: 4,
+    color: T.accent, fontFamily: "'Special Elite', cursive", fontSize: 12,
+    letterSpacing: 2, padding: "10px 20px", cursor: "pointer", outline: "none",
+    transition: "all 0.2s",
+  },
+  monsterSortBtn: {
+    background: "transparent", border: `1px solid ${T.border}`,
+    borderRadius: 3, color: T.muted, fontFamily: "'Courier Prime', monospace",
+    fontSize: 10, letterSpacing: 1, padding: "8px 12px", cursor: "pointer",
+    outline: "none",
+  },
+  monsterSortBtnActive: {
+    borderColor: T.accent, color: T.accent,
+  },
+  monsterEmpty: {
+    fontFamily: "'Special Elite', cursive", fontSize: 14, color: T.muted,
+    textAlign: "center", padding: "60px 20px", letterSpacing: 2,
+    lineHeight: 2,
+  },
+  monsterGrid: {
+    display: "flex", flexDirection: "column", gap: 12,
+  },
+  monsterTierGroup: {
+    marginBottom: 16,
+  },
+  monsterTierHeader: {
+    fontFamily: "'Special Elite', cursive", fontSize: 11, letterSpacing: 3,
+    color: T.muted, marginBottom: 10, paddingBottom: 6,
+    borderBottom: `1px solid ${T.border}`,
+    textTransform: "uppercase",
+  },
+  monsterCard: {
+    background: T.cardBg,
+    border: `1px solid ${T.border}`, borderRadius: 3, padding: 14,
+    transition: "all 0.2s",
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    gap: 12,
+  },
+  monsterCardInfo: {
+    flex: 1, minWidth: 0,
+  },
+  monsterCardHeader: {
+    display: "flex", alignItems: "center", gap: 10, marginBottom: 4,
+  },
+  monsterCardName: {
+    fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 700,
+    color: T.text, lineHeight: 1.2,
+  },
+  monsterCardCategory: {
+    fontFamily: "'Courier Prime', monospace", fontSize: 10, color: T.accent,
+    background: `${T.accent}22`, padding: "2px 8px", borderRadius: 2,
+    letterSpacing: 1, flexShrink: 0,
+  },
+  monsterCardType: {
+    fontFamily: "'Courier Prime', monospace", fontSize: 11, color: T.muted,
+    letterSpacing: 1,
+  },
+  monsterCardStats: {
+    display: "flex", gap: 12, fontFamily: "'Courier Prime', monospace",
+    fontSize: 11, color: T.muted, marginTop: 6,
+  },
+  monsterCardActions: {
+    display: "flex", gap: 6, flexShrink: 0,
+  },
+  monsterCardBtn: {
+    background: `${T.accent}22`, border: `1px solid ${T.accent}44`,
+    borderRadius: 2, color: T.text, fontFamily: "'Special Elite', cursive",
+    fontSize: 10, letterSpacing: 1, padding: "6px 10px", cursor: "pointer",
+    outline: "none", textAlign: "center",
+  },
+  monsterCardBtnDanger: {
+    background: "#dc262622", borderColor: "#dc262644", color: "#f87171",
+  },
+  monsterListView: {},
+  monsterEditView: {},
+  monsterEditToolbar: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    marginBottom: 20, flexWrap: "wrap", gap: 12,
+  },
+  monsterBackBtn: {
+    background: "transparent", border: `1px solid ${T.border}`,
+    borderRadius: 3, color: T.text, fontFamily: "'Special Elite', cursive",
+    fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer",
+    outline: "none",
+  },
+  monsterExportBtn: {
+    background: `${T.accent}22`, border: `1px solid ${T.accent}44`,
+    borderRadius: 3, color: T.text, fontFamily: "'Special Elite', cursive",
+    fontSize: 10, letterSpacing: 1, padding: "8px 12px", cursor: "pointer",
+    outline: "none",
+  },
+  monsterSaveBtn: {
+    background: T.accent, border: "none", borderRadius: 3,
+    color: T.bg, fontFamily: "'Special Elite', cursive", fontSize: 11,
+    letterSpacing: 2, padding: "8px 20px", cursor: "pointer", outline: "none",
+    fontWeight: 700,
+  },
+  monsterForm: {
+    display: "flex", flexDirection: "column", gap: 20,
+  },
+  monsterSection: {
+    background: T.cardBg, border: `1px solid ${T.border}`,
+    borderRadius: 4, padding: 16,
+  },
+  monsterSectionTitle: {
+    fontFamily: "'Special Elite', cursive", fontSize: 11, letterSpacing: 4,
+    color: T.accent, borderBottom: `1px solid ${T.border}`, paddingBottom: 6,
+    marginBottom: 12,
+  },
+  monsterFieldRow: {
+    display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 8,
+  },
+  monsterLabel: {
+    display: "block", fontFamily: "'Special Elite', cursive", fontSize: 9,
+    color: T.muted, letterSpacing: 2, marginBottom: 4, textTransform: "uppercase",
+  },
+  monsterInput: {
+    width: "100%", background: T.bg, border: `1px solid ${T.border}`,
+    borderRadius: 2, color: T.text, fontFamily: "'Courier Prime', monospace",
+    fontSize: 13, padding: "8px 10px", outline: "none",
+    transition: "border-color 0.2s",
+  },
+  monsterSelect: {
+    width: "100%", background: T.bg, border: `1px solid ${T.border}`,
+    borderRadius: 2, color: T.text, fontFamily: "'Courier Prime', monospace",
+    fontSize: 12, padding: "8px 10px", outline: "none",
+  },
+  monsterTextarea: {
+    width: "100%", background: T.bg, border: `1px solid ${T.border}`,
+    borderRadius: 2, color: T.text, fontFamily: "'Courier Prime', monospace",
+    fontSize: 12, padding: "10px", outline: "none", resize: "vertical",
+    lineHeight: 1.6,
+  },
+  monsterTypeGrid: {
+    display: "flex", flexWrap: "wrap", gap: 6,
+  },
+  monsterTypeBtn: {
+    background: T.bg, border: `1px solid ${T.border}`, borderRadius: 2,
+    color: T.muted, fontFamily: "'Courier Prime', monospace", fontSize: 11,
+    padding: "4px 10px", cursor: "pointer", outline: "none",
+    transition: "all 0.15s",
+  },
+  monsterTypeBtnActive: {
+    background: `${T.accent}33`, borderColor: T.accent, color: T.text,
+  },
+  monsterSizeHint: {
+    fontFamily: "'Courier Prime', monospace", fontSize: 10, color: T.muted,
+    marginTop: 8, fontStyle: "italic",
+  },
+  monsterAttrGrid: {
+    display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 10,
+  },
+  monsterAttrCard: {
+    background: T.bg, border: `1px solid ${T.border}`, borderRadius: 3,
+    padding: 10, textAlign: "center",
+  },
+  monsterAttrName: {
+    fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 700,
+    color: T.accent, letterSpacing: 2, marginBottom: 6,
+  },
+  monsterAttrInput: {
+    width: 50, background: "transparent", border: "none",
+    borderBottom: `2px solid ${T.border}`, color: T.text,
+    fontFamily: "'Courier Prime', monospace", fontSize: 20,
+    textAlign: "center", outline: "none", fontWeight: 700,
+  },
+  monsterAttrMod: {
+    fontFamily: "'Courier Prime', monospace", fontSize: 12, color: T.muted,
+    marginTop: 4,
+  },
+  monsterAttackRow: {
+    display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap",
+  },
+  monsterAbilityRow: {
+    marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${T.border}22`,
+  },
+  monsterAddItemBtn: {
+    background: "transparent", border: `1px dashed ${T.border}`,
+    borderRadius: 3, color: T.muted, fontFamily: "'Special Elite', cursive",
+    fontSize: 11, letterSpacing: 2, padding: "8px 16px", cursor: "pointer",
+    outline: "none", marginTop: 8,
+  },
+  monsterRemoveBtn: {
+    width: 28, height: 28, background: "transparent", border: "1px solid #dc262644",
+    borderRadius: 2, color: "#f87171", cursor: "pointer", fontSize: 12,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    outline: "none", flexShrink: 0, padding: 0,
+  },
+  monsterTagsWrap: {
+    display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6,
+  },
+  monsterTag: {
+    display: "inline-flex", alignItems: "center", gap: 4,
+    background: `${T.accent}22`, border: `1px solid ${T.accent}44`, borderRadius: 3,
+    padding: "4px 10px", fontFamily: "'Courier Prime', monospace", fontSize: 11,
+    color: T.text, letterSpacing: 1,
+  },
+  monsterTagDanger: {
+    background: "#dc262622", borderColor: "#dc262644", color: "#f87171",
+  },
+  monsterTagX: {
+    cursor: "pointer", color: T.muted, fontSize: 10, marginLeft: 4,
+    opacity: 0.7, transition: "opacity 0.2s",
+  },
+  monsterFooter: {
+    fontFamily: "'Special Elite', cursive", fontSize: 8, letterSpacing: 4,
+    color: T.muted, textAlign: "center", padding: "12px 20px",
+    borderTop: `1px solid ${T.border}`, background: T.cardBg,
+  },
 };
 }
 
@@ -3126,4 +4155,18 @@ const mobileStyles = {
   jpLogo: { fontSize: 18, letterSpacing: 3 },
   jpToolbar: { flexDirection: "column", gap: 8, alignItems: "stretch" },
   jpToolbarRight: { justifyContent: "center" },
+  // Monster Creator Mobile
+  monsterBtn: { padding: "4px 8px", gap: 4 },
+  monsterText: { fontSize: 9, letterSpacing: 1 },
+  monsterPage: { maxWidth: "100%", borderRadius: 0 },
+  monsterHeader: { padding: "12px 16px", flexDirection: "column", alignItems: "flex-start" },
+  monsterTitle: { fontSize: 16, letterSpacing: 2 },
+  monsterContent: { padding: "12px 16px", maxHeight: "calc(100vh - 160px)" },
+  monsterGrid: { gridTemplateColumns: "1fr" },
+  monsterAttrGrid: { gridTemplateColumns: "repeat(3, 1fr)", gap: 6 },
+  monsterAttrCard: { padding: 8 },
+  monsterAttrName: { fontSize: 12 },
+  monsterAttrInput: { width: 40, fontSize: 16 },
+  monsterFieldRow: { flexDirection: "column", gap: 8 },
+  monsterEditToolbar: { flexDirection: "column", gap: 8 },
 };
